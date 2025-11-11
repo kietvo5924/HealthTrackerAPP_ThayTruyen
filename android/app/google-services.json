@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "38890409708",
+    "project_id": "health-tracker-kiet",
+    "storage_bucket": "health-tracker-kiet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38890409708:android:9e8b881a597131e6025fc9",
+        "android_client_info": {
+          "package_name": "com.example.health_tracker_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWDA_A_vbSUtQmTwqJvcA6mrsAq9FeK70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38890409708:android:71967fe651311119025fc9",
+        "android_client_info": {
+          "package_name": "com.example.health_tracker_app_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWDA_A_vbSUtQmTwqJvcA6mrsAq9FeK70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
