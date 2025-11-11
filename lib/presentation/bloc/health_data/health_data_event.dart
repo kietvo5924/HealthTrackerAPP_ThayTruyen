@@ -7,17 +7,13 @@ abstract class HealthDataEvent extends Equatable {
   List<Object> get props => [];
 }
 
-// Event để tải dữ liệu cho một ngày
 class HealthDataFetched extends HealthDataEvent {
   final DateTime date;
   const HealthDataFetched(this.date);
 }
 
-// Event chung để log, chúng ta sẽ cập nhật state hiện tại
-// và sau đó gọi event này để lưu
 class HealthDataLogged extends HealthDataEvent {}
 
-// Event để cập nhật state tạm thời (trước khi lưu)
 class HealthDataWaterChanged extends HealthDataEvent {
   final double waterIntake;
   const HealthDataWaterChanged(this.waterIntake);
@@ -32,7 +28,11 @@ class HealthDataWeightChanged extends HealthDataEvent {
 class HealthDataStepSensorStarted extends HealthDataEvent {}
 
 // Event nội bộ, được kích hoạt khi cảm biến có dữ liệu mới
-class _HealthDataStepSensorUpdated extends HealthDataEvent {
+// (Đổi tên _HealthDataStepSensorUpdated -> HealthDataStepSensorUpdated)
+class HealthDataStepSensorUpdated extends HealthDataEvent {
   final int steps;
-  const _HealthDataStepSensorUpdated(this.steps);
+  const HealthDataStepSensorUpdated(this.steps);
 }
+
+// Event nội bộ, để lưu số bước đi vào API (một cách âm thầm)
+class HealthDataStepsSaved extends HealthDataEvent {}

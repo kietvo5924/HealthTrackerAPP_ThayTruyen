@@ -7,6 +7,7 @@ import 'package:health_tracker_app/domain/entities/health_data.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/log_health_data_usecase.dart';
 import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 part 'health_data_event.dart';
 part 'health_data_state.dart';
@@ -30,7 +31,8 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
     on<HealthDataWeightChanged>(_onHealthDataWeightChanged);
     on<HealthDataLogged>(_onHealthDataLogged);
     on<HealthDataStepSensorStarted>(_onStepSensorStarted);
-    on<_HealthDataStepSensorUpdated>(_onStepSensorUpdated);
+    on<HealthDataStepSensorUpdated>(_onStepSensorUpdated); // Đổi tên event
+    on<HealthDataStepsSaved>(_onHealthDataStepsSaved);
   }
 
   @override
@@ -140,41 +142,86 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
     HealthDataStepSensorStarted event,
     Emitter<HealthDataState> emit,
   ) async {
-    // Hủy stream cũ nếu có
+    // Hủy các stream cũ
     await _stepCountSubscription?.cancel();
 
     try {
-      // 1. Lấy số bước hiện tại làm mốc
-      // Thư viện Pedometer trả về tổng số bước kể từ khi máy khởi động
+      // 1. Yêu cầu quyền (Permission)
+      final PermissionStatus status = await Permission.activityRecognition
+          .request();
+
+      // 2. Kiểm tra kết quả
+      if (status.isGranted) {
+        // Nếu được cấp quyền, bắt đầu lắng nghe
+        _startListeningToSteps(emit);
+      } else if (status.isDenied || status.isPermanentlyDenied) {
+        // Nếu bị từ chối, phát ra lỗi
+        emit(
+          state.copyWith(
+            status: HealthDataStatus.failure,
+            errorMessage:
+                'Quyền truy cập hoạt động thể chất bị từ chối. Vui lòng cấp quyền trong Cài đặt.',
+          ),
+        );
+      }
+    } catch (error) {
+      emit(
+        state.copyWith(
+          status: HealthDataStatus.failure,
+          errorMessage: 'Thiết bị không hỗ trợ cảm biến bước đi.',
+        ),
+      );
+    }
+  }
+
+  // Hàm private mới để khởi động StepCount (chỉ gọi sau khi có quyền)
+  Future<void> _startListeningToSteps(Emitter<HealthDataState> emit) async {
+    await _stepCountSubscription?.cancel();
+    try {
+      // Lấy số bước hiện tại làm mốc
       final StepCount now = await Pedometer.stepCountStream.first;
       _initialSteps = now.steps;
 
-      // 2. Lắng nghe thay đổi
+      // Lắng nghe thay đổi
       _stepCountSubscription = Pedometer.stepCountStream.listen(
         (StepCount event) {
-          // Tính số bước đi mới (tổng - mốc) + số bước đã lưu (từ API)
           final int stepsAlreadySaved = state.healthData.steps ?? 0;
           final int stepsSinceAppOpen = event.steps - _initialSteps;
 
-          final int totalStepsToday = stepsAlreadySaved + stepsSinceAppOpen;
+          // Đảm bảo số bước không bị âm (nếu điện thoại khởi động lại)
+          if (stepsSinceAppOpen < 0) {
+            _initialSteps = event.steps; // Reset mốc
+          }
 
-          // Thêm event nội bộ để cập nhật
-          add(_HealthDataStepSensorUpdated(totalStepsToday));
+          final int totalStepsToday =
+              stepsAlreadySaved +
+              (stepsSinceAppOpen > 0 ? stepsSinceAppOpen : 0);
+
+          add(HealthDataStepSensorUpdated(totalStepsToday));
         },
         onError: (error) {
-          // (Bạn có thể emit lỗi ở đây)
+          emit(
+            state.copyWith(
+              status: HealthDataStatus.failure,
+              errorMessage: 'Lỗi cảm biến bước đi.',
+            ),
+          );
         },
       );
-    } catch (error) {
-      // (Bạn có thể emit lỗi ở đây, ví dụ: "Không có cảm biến")
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: HealthDataStatus.failure,
+          errorMessage: 'Không thể khởi động cảm biến bước đi.',
+        ),
+      );
     }
   }
 
   void _onStepSensorUpdated(
-    _HealthDataStepSensorUpdated event,
+    HealthDataStepSensorUpdated event, // Đổi tên từ _HealthData...
     Emitter<HealthDataState> emit,
   ) {
-    // Chỉ cập nhật nếu số bước mới > số bước cũ
     if (event.steps > (state.healthData.steps ?? 0)) {
       final updatedData = HealthDataModel(
         id: state.healthData.id,
@@ -188,13 +235,38 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
       emit(
         state.copyWith(
           healthData: updatedData,
-          // Chuyển sang success để UI cập nhật
-          status: HealthDataStatus.success,
+          status: HealthDataStatus.success, // Cập nhật UI
         ),
       );
 
-      // (Nâng cao: Bạn có thể thêm logic để gọi HealthDataLogged()
-      // chỉ sau 100 bước hoặc 5 phút để tránh gọi API liên tục)
+      // --- THÊM MỚI: Tự động lưu ---
+      // Lưu vào CSDL mỗi khi đi được 20 bước mới
+      if (event.steps % 20 == 0) {
+        add(HealthDataStepsSaved());
+      }
+      // --- KẾT THÚC THÊM MỚI ---
     }
+  }
+
+  // --- THÊM MỚI: Hàm lưu ngầm ---
+  Future<void> _onHealthDataStepsSaved(
+    HealthDataStepsSaved event,
+    Emitter<HealthDataState> emit,
+  ) async {
+    // KHÔNG emit(loading) để tránh làm giật UI
+    print('Tự động lưu số bước đi: ${state.healthData.steps}');
+    final result = await _logHealthDataUseCase(state.healthData);
+
+    result.fold(
+      (failure) {
+        // Chỉ in ra lỗi, không emit failure để không ảnh hưởng UI
+        print('Lỗi tự động lưu bước đi: ${failure.message}');
+      },
+      (updatedHealthData) {
+        // Lưu thành công, cập nhật lại state (với ID mới nếu có)
+        print('Đã lưu bước đi thành công.');
+        emit(state.copyWith(healthData: updatedHealthData));
+      },
+    );
   }
 }
