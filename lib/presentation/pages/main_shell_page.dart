@@ -4,6 +4,11 @@ import 'package:health_tracker_app/presentation/pages/nutrition_page.dart';
 import 'package:health_tracker_app/presentation/pages/profile_page.dart';
 import 'package:health_tracker_app/presentation/pages/statistics_page.dart';
 import 'package:health_tracker_app/presentation/pages/workout_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_tracker_app/core/di/service_locator.dart';
+import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 
 class MainShellPage extends StatefulWidget {
   const MainShellPage({super.key});
@@ -26,52 +31,69 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Sử dụng IndexedStack để giữ trạng thái (state) của các trang
-      // khi chuyển tab (rất quan trọng cho BLoC và cảm biến bước đi)
-      body: IndexedStack(index: _currentIndex, children: _pages),
+    return MultiBlocProvider(
+      providers: [
+        // Cung cấp HealthDataBloc cho toàn bộ các tab
+        BlocProvider(
+          create: (context) =>
+              sl<HealthDataBloc>()..add(HealthDataFetched(DateTime.now())),
+        ),
+        // Cung cấp NutritionBloc
+        BlocProvider(
+          create: (context) =>
+              sl<NutritionBloc>()..add(NutritionGetMeals(DateTime.now())),
+        ),
+        // Cung cấp WorkoutBloc
+        BlocProvider(
+          create: (context) => sl<WorkoutBloc>()..add(WorkoutsFetched()),
+        ),
+      ],
+      child: Scaffold(
+        // Sử dụng IndexedStack để giữ trạng thái (state) của các trang
+        body: IndexedStack(index: _currentIndex, children: _pages),
 
-      // Thanh điều hướng dưới
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        // --- Quan trọng: Thêm các dòng sau ---
-        type: BottomNavigationBarType.fixed, // Để hiển thị 4+ mục
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
+        // Thanh điều hướng dưới
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          // --- Quan trọng: Thêm các dòng sau ---
+          type: BottomNavigationBarType.fixed, // Để hiển thị 4+ mục
+          selectedItemColor: Theme.of(context).primaryColor,
+          unselectedItemColor: Colors.grey,
 
-        // --- Hết phần quan trọng ---
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Thống kê',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu_outlined), // Đổi Icon
-            activeIcon: Icon(Icons.restaurant_menu),
-            label: 'Dinh dưỡng', // Đổi Label
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center_outlined),
-            activeIcon: Icon(Icons.fitness_center),
-            label: 'Bài tập',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Hồ sơ',
-          ),
-        ],
+          // --- Hết phần quan trọng ---
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Trang chủ',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: 'Thống kê',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant_menu_outlined), // Đổi Icon
+              activeIcon: Icon(Icons.restaurant_menu),
+              label: 'Dinh dưỡng', // Đổi Label
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fitness_center_outlined),
+              activeIcon: Icon(Icons.fitness_center),
+              label: 'Bài tập',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Hồ sơ',
+            ),
+          ],
+        ),
       ),
     );
   }

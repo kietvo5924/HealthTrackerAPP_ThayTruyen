@@ -25,6 +25,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileDateOfBirthChanged>(_onDateOfBirthChanged);
     on<ProfileAddressChanged>(_onAddressChanged);
     on<ProfileSubmitted>(_onProfileSubmitted);
+    on<ProfileMedicalHistoryChanged>(_onMedicalHistoryChanged);
+    on<ProfileAllergiesChanged>(_onAllergiesChanged);
   }
 
   Future<void> _onProfileFetched(
@@ -159,6 +161,50 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           ),
         );
       },
+    );
+  }
+
+  void _onMedicalHistoryChanged(
+    ProfileMedicalHistoryChanged event,
+    Emitter<ProfileState> emit,
+  ) {
+    if (state.userProfile == null) return;
+    emit(
+      state.copyWith(
+        userProfile: UserProfileModel(
+          id: state.userProfile!.id,
+          email: state.userProfile!.email,
+          role: state.userProfile!.role,
+          fullName: state.userProfile!.fullName,
+          phoneNumber: state.userProfile!.phoneNumber,
+          dateOfBirth: state.userProfile!.dateOfBirth,
+          address: state.userProfile!.address,
+          medicalHistory: event.medicalHistory, // Thay đổi
+          allergies: state.userProfile!.allergies,
+        ),
+      ),
+    );
+  }
+
+  void _onAllergiesChanged(
+    ProfileAllergiesChanged event,
+    Emitter<ProfileState> emit,
+  ) {
+    if (state.userProfile == null) return;
+    emit(
+      state.copyWith(
+        userProfile: UserProfileModel(
+          id: state.userProfile!.id,
+          email: state.userProfile!.email,
+          role: state.userProfile!.role,
+          fullName: state.userProfile!.fullName,
+          phoneNumber: state.userProfile!.phoneNumber,
+          dateOfBirth: state.userProfile!.dateOfBirth,
+          address: state.userProfile!.address,
+          medicalHistory: state.userProfile!.medicalHistory,
+          allergies: event.allergies, // Thay đổi
+        ),
+      ),
     );
   }
 }

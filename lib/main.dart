@@ -8,10 +8,13 @@ import 'package:health_tracker_app/presentation/pages/login_page.dart';
 import 'package:health_tracker_app/presentation/pages/main_shell_page.dart';
 import 'package:health_tracker_app/presentation/pages/splash_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   // Đảm bảo Flutter đã khởi tạo xong
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('vi_VN', null);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

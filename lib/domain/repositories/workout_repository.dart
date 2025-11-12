@@ -17,4 +17,6 @@ abstract class WorkoutRepository {
   });
 
   Future<Either<Failure, List<Workout>>> getCommunityFeed();
+
+  Future<Either<Failure, Workout>> toggleWorkoutLike(int workoutId);
 }

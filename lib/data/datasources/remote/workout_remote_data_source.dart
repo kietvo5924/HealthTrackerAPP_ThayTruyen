@@ -6,6 +6,7 @@ abstract class WorkoutRemoteDataSource {
   Future<List<WorkoutModel>> getMyWorkouts();
   Future<WorkoutModel> logWorkout(LogWorkoutRequestModel request);
   Future<List<WorkoutModel>> getCommunityFeed();
+  Future<WorkoutModel> toggleWorkoutLike(int workoutId);
 }
 
 class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
@@ -78,6 +79,30 @@ class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
         throw DioException(
           requestOptions: response.requestOptions,
           message: 'Lấy Bảng tin thất bại',
+        );
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data?['message'] ?? 'Lỗi không xác định';
+      throw DioException(
+        requestOptions: e.requestOptions,
+        message: errorMessage,
+      );
+    }
+  }
+
+  @override
+  Future<WorkoutModel> toggleWorkoutLike(int workoutId) async {
+    try {
+      // Gọi API POST /api/workouts/{id}/like
+      final response = await dio.post('/workouts/$workoutId/like');
+
+      if (response.statusCode == 200) {
+        // Trả về bài tập đã được cập nhật (với likeCount mới)
+        return WorkoutModel.fromJson(response.data);
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Like/Unlike thất bại',
         );
       }
     } on DioException catch (e) {

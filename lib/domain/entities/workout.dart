@@ -13,6 +13,8 @@ class Workout extends Equatable {
   final double? distanceInKm;
   final String? routePolyline;
   final String? userFullName;
+  final int likeCount;
+  final bool likedByCurrentUser;
 
   const Workout({
     required this.id,
@@ -23,6 +25,8 @@ class Workout extends Equatable {
     this.distanceInKm,
     this.routePolyline,
     this.userFullName,
+    required this.likeCount,
+    required this.likedByCurrentUser,
   });
 
   @override
@@ -35,5 +39,33 @@ class Workout extends Equatable {
     distanceInKm,
     routePolyline,
     userFullName,
+    likeCount,
+    likedByCurrentUser,
   ];
+
+  Workout copyWith({
+    int? id,
+    WorkoutType? workoutType,
+    int? durationInMinutes,
+    double? caloriesBurned,
+    DateTime? startedAt,
+    double? distanceInKm,
+    String? routePolyline,
+    String? userFullName,
+    int? likeCount,
+    bool? likedByCurrentUser,
+  }) {
+    return Workout(
+      id: id ?? this.id,
+      workoutType: workoutType ?? this.workoutType,
+      durationInMinutes: durationInMinutes ?? this.durationInMinutes,
+      caloriesBurned: caloriesBurned ?? this.caloriesBurned,
+      startedAt: startedAt ?? this.startedAt,
+      distanceInKm: distanceInKm ?? this.distanceInKm,
+      routePolyline: routePolyline ?? this.routePolyline,
+      userFullName: userFullName ?? this.userFullName,
+      likeCount: likeCount ?? this.likeCount,
+      likedByCurrentUser: likedByCurrentUser ?? this.likedByCurrentUser,
+    );
+  }
 }

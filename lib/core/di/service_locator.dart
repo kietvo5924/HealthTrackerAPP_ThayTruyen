@@ -32,6 +32,7 @@ import 'package:health_tracker_app/domain/usecases/login_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/logout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/save_fcm_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/signup_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/toggle_workout_like_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_profile_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
@@ -134,6 +135,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetMyWorkoutsUseCase(sl()));
   sl.registerLazySingleton(() => LogWorkoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCommunityFeedUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleWorkoutLikeUseCase(sl()));
 
   // --- THÊM MỚI (Nutrition) ---
   sl.registerLazySingleton(() => SearchFoodUseCase(sl()));
@@ -174,7 +176,10 @@ Future<void> init() async {
   sl.registerFactory<TrackingBloc>(
     () => TrackingBloc(location: sl(), getHealthDataUseCase: sl()),
   );
-  sl.registerFactory<FeedBloc>(() => FeedBloc(getCommunityFeedUseCase: sl()));
+  sl.registerFactory<FeedBloc>(
+    () =>
+        FeedBloc(getCommunityFeedUseCase: sl(), toggleWorkoutLikeUseCase: sl()),
+  );
 
   sl.registerFactory<NutritionBloc>(
     () => NutritionBloc(

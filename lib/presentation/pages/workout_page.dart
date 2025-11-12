@@ -1,96 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/feed_page.dart';
 import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:intl/intl.dart';
-
+import 'package:health_tracker_app/presentation/pages/add_workout_page.dart';
 import 'package:health_tracker_app/presentation/pages/tracking_page.dart';
-
-// --- THÊM IMPORT MỚI ---
-import 'package:health_tracker_app/core/utils/string_extensions.dart';
-// --- KẾT THÚC THÊM MỚI ---
 
 class WorkoutPage extends StatelessWidget {
   const WorkoutPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          sl<WorkoutBloc>()..add(WorkoutsFetched()), // Tải khi mở
-      child: DefaultTabController(
-        length: 2, // 2 tab
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Bài tập'),
-            actions: [
-              // Nút Refresh
-              BlocBuilder<WorkoutBloc, WorkoutState>(
-                builder: (context, state) {
-                  // (Code nút Refresh đã có)
-                  if (state.status == WorkoutStatus.loading &&
-                      !state.isSubmitting) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  }
-                  return IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      context.read<WorkoutBloc>().add(WorkoutsFetched());
-                    },
+    return DefaultTabController(
+      length: 2, // 2 tab
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Bài tập'),
+          actions: [
+            // Nút Refresh
+            BlocBuilder<WorkoutBloc, WorkoutState>(
+              builder: (context, state) {
+                // (Code nút Refresh đã có)
+                if (state.status == WorkoutStatus.loading &&
+                    !state.isSubmitting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   );
-                },
-              ),
-            ],
-            // Thêm TabBar
-            bottom: const TabBar(
-              tabs: [
-                Tab(text: 'Bài tập của tôi'),
-                Tab(text: 'Cộng đồng'),
-              ],
+                }
+                return IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    context.read<WorkoutBloc>().add(WorkoutsFetched());
+                  },
+                );
+              },
             ),
-          ),
-
-          // Thay body bằng TabBarView
-          body: TabBarView(
-            children: [
-              // Tab 1: Bài tập của tôi
-              _MyWorkoutsView(),
-
-              // Tab 2: Cộng đồng
-              FeedPage(), // Sử dụng lại FeedPage ở đây
+          ],
+          // Thêm TabBar
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Bài tập của tôi'),
+              Tab(text: 'Cộng đồng'),
             ],
           ),
+        ),
 
-          floatingActionButton: BlocBuilder<WorkoutBloc, WorkoutState>(
-            builder: (context, state) {
-              return FloatingActionButton(
-                heroTag: 'add_workout_button',
-                onPressed: () {
-                  Navigator.of(context).push(
+        // Thay body bằng TabBarView
+        body: TabBarView(
+          children: [
+            // Tab 1: Bài tập của tôi
+            _MyWorkoutsView(),
+
+            // Tab 2: Cộng đồng
+            FeedPage(), // Sử dụng lại FeedPage ở đây
+          ],
+        ),
+
+        floatingActionButton: BlocBuilder<WorkoutBloc, WorkoutState>(
+          builder: (context, state) {
+            return FloatingActionButton(
+              heroTag: 'add_workout_button',
+              onPressed: () {
+                // Gọi hàm hiển thị lựa chọn
+                _showAddWorkoutOptions(context);
+              },
+              child: const Icon(Icons.add),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showAddWorkoutOptions(BuildContext pageContext) {
+    // pageContext là context của trang WorkoutPage, có chứa WorkoutBloc
+    showModalBottomSheet(
+      context: pageContext,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.gps_fixed),
+                title: const Text('Bắt đầu bài tập (Tracking GPS)'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop(); // Đóng BottomSheet
+                  Navigator.of(pageContext).push(
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
-                        value: BlocProvider.of<WorkoutBloc>(context),
+                        value: BlocProvider.of<WorkoutBloc>(pageContext),
                         child: const TrackingPage(),
                       ),
                     ),
                   );
                 },
-                child: const Icon(Icons.add),
-              );
-            },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_note),
+                title: const Text('Ghi lại thủ công'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop(); // Đóng BottomSheet
+                  Navigator.of(pageContext).push(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: BlocProvider.of<WorkoutBloc>(pageContext),
+                        // Mở trang AddWorkoutPage
+                        child: const AddWorkoutPage(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

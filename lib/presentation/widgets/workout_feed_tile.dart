@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/utils/string_extensions.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
+import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
 import 'package:intl/intl.dart';
 
 class WorkoutFeedTile extends StatelessWidget {
@@ -150,6 +152,46 @@ class WorkoutFeedTile extends StatelessWidget {
                   // (Nâng cao: Có thể dùng widget 'flutter_map'
                   // với Polyline ở đây, nhưng sẽ phức tạp hơn)
                 ),
+              const Divider(height: 24, thickness: 0.5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  // Nút Like
+                  IconButton(
+                    icon: Icon(
+                      workout.likedByCurrentUser
+                          ? Icons
+                                .favorite // Đã like
+                          : Icons.favorite_border, // Chưa like
+                      color: workout.likedByCurrentUser
+                          ? Colors.redAccent
+                          : Colors.grey,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      // Gọi BLoC, workout.id là int
+                      context.read<FeedBloc>().add(
+                        FeedWorkoutLiked(workout.id),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${workout.likeCount} lượt thích',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  // (Bạn có thể thêm nút Bình luận ở đây sau)
+                  // const SizedBox(width: 24),
+                  // const Icon(Icons.comment_outlined, color: Colors.grey),
+                  // const SizedBox(width: 8),
+                  // Text('Bình luận'),
+                ],
+              ),
             ],
           ),
         ),

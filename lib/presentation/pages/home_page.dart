@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/profile_page.dart';
@@ -9,8 +8,9 @@ import 'package:intl/intl.dart';
 
 import 'package:health_tracker_app/presentation/pages/statistics_page.dart';
 import 'package:health_tracker_app/presentation/widgets/circular_health_tile.dart';
+import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 
-// --- TẠO HÀM HELPER MỚI (Ở BÊN NGOÀI CLASS) ---
 // Hàm này sẽ trả về "Hôm nay", "Hôm qua", hoặc "dd/MM/yyyy"
 String _buildTitle(DateTime date) {
   final now = DateTime.now();
@@ -23,129 +23,127 @@ String _buildTitle(DateTime date) {
   } else if (selectedDay == yesterday) {
     return 'Hôm qua';
   } else {
-    return DateFormat.yMMMd().format(date); // Ví dụ: 10 thg 11, 2025
+    return DateFormat.yMMMd('vi_VN').format(date);
   }
 }
-// --- KẾT THÚC HÀM HELPER ---
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<HealthDataBloc>(),
-      // --- SỬA ĐỔI: BỌC SCAFFOLD BẰNG BLOCBUILDER ---
-      child: BlocBuilder<HealthDataBloc, HealthDataState>(
-        builder: (context, state) {
-          return Scaffold(
-            backgroundColor: Colors.grey.shade100,
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              // Tiêu đề động (dynamic)
-              title: Text(
-                _buildTitle(state.healthData.date),
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 28,
-                ),
+    return BlocBuilder<HealthDataBloc, HealthDataState>(
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: Colors.grey.shade100,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            // Tiêu đề động (dynamic)
+            title: Text(
+              _buildTitle(state.healthData.date),
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 28,
               ),
-              actions: [
-                // --- THÊM MỚI: NÚT CHỌN NGÀY ---
-                IconButton(
-                  icon: const Icon(
-                    Icons.calendar_today_outlined,
-                    color: Colors.black,
-                  ),
-                  onPressed: () async {
-                    // 1. Hiển thị DatePicker
-                    final DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: state.healthData.date,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(), // Không cho chọn ngày tương lai
-                    );
-
-                    // 2. Nếu người dùng chọn ngày mới
-                    if (pickedDate != null &&
-                        pickedDate != state.healthData.date) {
-                      // 3. Gọi BLoC để tải dữ liệu cho ngày đó
-                      context.read<HealthDataBloc>().add(
-                        HealthDataFetched(pickedDate),
-                      );
-                    }
-                  },
-                ),
-
-                // --- KẾT THÚC THÊM MỚI ---
-                IconButton(
-                  icon: const Icon(Icons.bar_chart, color: Colors.black),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const StatisticsPage(),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.person, color: Colors.black),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ProfilePage(),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.black),
-                  onPressed: () {
-                    context.read<AuthBloc>().add(AuthLoggedOut());
-                  },
-                ),
-              ],
             ),
-
-            // --- SỬA ĐỔI: Bỏ BlocConsumer (vì đã có ở trên) ---
-            body: BlocConsumer<HealthDataBloc, HealthDataState>(
-              // (Chúng ta giữ BlocConsumer ở đây để xử lý SnackBar)
-              listener: (context, state) {
-                if (state.status == HealthDataStatus.failure) {
-                  ScaffoldMessenger.of(context)
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
-                    );
-                }
-              },
-              builder: (context, state) {
-                if (state.status == HealthDataStatus.initial) {
-                  context.read<HealthDataBloc>().add(
-                    HealthDataFetched(DateTime.now()),
+            actions: [
+              // --- THÊM MỚI: NÚT CHỌN NGÀY ---
+              IconButton(
+                icon: const Icon(
+                  Icons.calendar_today_outlined,
+                  color: Colors.black,
+                ),
+                onPressed: () async {
+                  // 1. Hiển thị DatePicker
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: state.healthData.date,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(), // Không cho chọn ngày tương lai
                   );
-                  return const Center(child: CircularProgressIndicator());
-                }
 
-                if (state.status == HealthDataStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                  // 2. Nếu người dùng chọn ngày mới
+                  if (pickedDate != null &&
+                      pickedDate != state.healthData.date) {
+                    // 3. Gọi CẢ 3 BLoC để tải dữ liệu cho ngày mới
+                    context.read<HealthDataBloc>().add(
+                      HealthDataFetched(pickedDate),
+                    );
+                    context.read<NutritionBloc>().add(
+                      NutritionGetMeals(pickedDate),
+                    );
+                    context.read<WorkoutBloc>().add(WorkoutsFetched());
+                  }
+                },
+              ),
 
-                if (state.status == HealthDataStatus.failure &&
-                    state.healthData.id == null) {
-                  return Center(child: Text('Lỗi: ${state.errorMessage}'));
-                }
+              // --- KẾT THÚC THÊM MỚI ---
+              IconButton(
+                icon: const Icon(Icons.bar_chart, color: Colors.black),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const StatisticsPage(),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.person, color: Colors.black),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.black),
+                onPressed: () {
+                  context.read<AuthBloc>().add(AuthLoggedOut());
+                },
+              ),
+            ],
+          ),
 
-                // Hiển thị Dashboard
-                return HealthDataDashboard(healthData: state.healthData);
-              },
-            ),
-          );
-        },
-      ),
-      // --- KẾT THÚC SỬA ĐỔI ---
+          // --- SỬA ĐỔI: Bỏ BlocConsumer (vì đã có ở trên) ---
+          body: BlocConsumer<HealthDataBloc, HealthDataState>(
+            // (Chúng ta giữ BlocConsumer ở đây để xử lý SnackBar)
+            listener: (context, state) {
+              if (state.status == HealthDataStatus.failure) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
+                  );
+              }
+            },
+            builder: (context, state) {
+              if (state.status == HealthDataStatus.initial) {
+                context.read<HealthDataBloc>().add(
+                  HealthDataFetched(DateTime.now()),
+                );
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state.status == HealthDataStatus.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state.status == HealthDataStatus.failure &&
+                  state.healthData.id == null) {
+                return Center(child: Text('Lỗi: ${state.errorMessage}'));
+              }
+
+              // Hiển thị Dashboard
+              return HealthDataDashboard(healthData: state.healthData);
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -185,15 +183,11 @@ class HealthDataDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            // Dùng lại hàm helper
-            _buildTitle(healthData.date),
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-
           Column(
             children: [
+              const _CalorieSummaryCard(),
+              const SizedBox(height: 20),
+
               // 1. Bước đi
               CircularHealthTile(
                 label: 'Bước đi',
@@ -474,6 +468,205 @@ class HealthDataTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// --- DÁN CÁC CLASS NÀY VÀO CUỐI FILE home_page.dart ---
+
+class _CalorieSummaryCard extends StatelessWidget {
+  const _CalorieSummaryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    // Lấy ngày hiện tại từ HealthDataBloc
+    final selectedDate = context.select(
+      (HealthDataBloc bloc) => bloc.state.healthData.date,
+    );
+
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tổng kết Calo',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // 1. Calo Nạp vào (từ NutritionBloc)
+                BlocBuilder<NutritionBloc, NutritionState>(
+                  builder: (context, state) {
+                    // Chỉ tính calo cho ngày đang chọn
+                    if (state.status == NutritionStatus.loading) {
+                      return const _StatTile(
+                        label: 'Nạp vào',
+                        value: '...',
+                        unit: 'kcal',
+                      );
+                    }
+                    // Tính tổng calo từ các bữa ăn
+                    final caloriesIn = state.meals.fold<double>(
+                      0.0,
+                      (sum, meal) => sum + meal.totalMealCalories,
+                    );
+                    return _StatTile(
+                      label: 'Nạp vào',
+                      value: caloriesIn.toInt().toString(),
+                      unit: 'kcal',
+                    );
+                  },
+                ),
+
+                const Text(
+                  '-',
+                  style: TextStyle(fontSize: 24, color: Colors.grey),
+                ),
+
+                // 2. Calo Tiêu thụ (từ HealthDataBloc)
+                BlocBuilder<HealthDataBloc, HealthDataState>(
+                  builder: (context, state) {
+                    final caloriesOut = state.healthData.caloriesBurnt ?? 0;
+                    return _StatTile(
+                      label: 'Tiêu thụ',
+                      value: caloriesOut.toInt().toString(),
+                      unit: 'kcal',
+                    );
+                  },
+                ),
+
+                const Text(
+                  '=',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+
+                // 3. Kết quả (Thâm hụt/Dư thừa)
+                MultiBlocListener(
+                  listeners: [
+                    // Dùng MultiBlocListener để lấy state từ nhiều BLoC
+                    // và tính toán kết quả cuối cùng
+                    BlocListener<NutritionBloc, NutritionState>(
+                      listener: (context, state) {},
+                    ),
+                    BlocListener<HealthDataBloc, HealthDataState>(
+                      listener: (context, state) {},
+                    ),
+                  ],
+                  child: Builder(
+                    builder: (context) {
+                      // Lấy state một cách an toàn
+                      final nutritionState = context
+                          .watch<NutritionBloc>()
+                          .state;
+                      final healthState = context.watch<HealthDataBloc>().state;
+
+                      final caloriesIn = nutritionState.meals.fold<double>(
+                        0.0,
+                        (sum, meal) => sum + meal.totalMealCalories,
+                      );
+                      final caloriesOut =
+                          healthState.healthData.caloriesBurnt ?? 0;
+                      final remaining = caloriesIn - caloriesOut;
+
+                      final isDeficit = remaining < 0; // Thâm hụt
+
+                      return _StatTile(
+                        label: isDeficit ? 'Thâm hụt' : 'Dư thừa',
+                        value: remaining.toInt().abs().toString(),
+                        unit: 'kcal',
+                        valueColor: isDeficit ? Colors.green : Colors.red,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+
+            // Thông tin thêm: Calo từ Vận động (từ WorkoutBloc)
+            BlocBuilder<WorkoutBloc, WorkoutState>(
+              builder: (context, state) {
+                // Lọc và tính tổng calo từ các bài tập trong ngày đã chọn
+                final activeCalories = state.workouts
+                    .where(
+                      (w) => DateUtils.isSameDay(
+                        w.startedAt.toLocal(),
+                        selectedDate,
+                      ),
+                    )
+                    .fold<double>(
+                      0.0,
+                      (sum, w) => sum + (w.caloriesBurned ?? 0),
+                    );
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.fitness_center,
+                        color: Colors.deepOrange,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Vận động đốt: ${activeCalories.toInt()} kcal',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget con để hiển thị chỉ số (tái sử dụng từ trang detail)
+class _StatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+  final Color? valueColor;
+
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.unit,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? Colors.black, // Màu mặc định
+          ),
+        ),
+        Text(unit, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+      ],
     );
   }
 }

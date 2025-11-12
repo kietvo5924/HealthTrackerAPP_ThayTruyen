@@ -10,6 +10,8 @@ class WorkoutModel extends Workout {
     super.distanceInKm,
     super.routePolyline,
     super.userFullName,
+    required super.likeCount,
+    required super.likedByCurrentUser,
   });
 
   factory WorkoutModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,8 @@ class WorkoutModel extends Workout {
       distanceInKm: json['distanceInKm']?.toDouble(),
       routePolyline: json['routePolyline'],
       userFullName: json['userFullName'],
+      likeCount: json['likeCount'] ?? 0,
+      likedByCurrentUser: json['likedByCurrentUser'] ?? false,
     );
   }
 

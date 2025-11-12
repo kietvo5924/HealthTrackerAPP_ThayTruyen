@@ -138,6 +138,35 @@ class ProfileForm extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _DateOfBirthPicker(), // Widget chọn ngày
+          const SizedBox(height: 16),
+          TextFormField(
+            initialValue: profile.medicalHistory,
+            decoration: const InputDecoration(
+              labelText: 'Tiền sử bệnh án',
+              border: OutlineInputBorder(),
+              alignLabelWithHint: true, // Cho label lên trên
+            ),
+            maxLines: 4, // Cho phép nhập nhiều dòng
+            onChanged: (value) {
+              context.read<ProfileBloc>().add(
+                ProfileMedicalHistoryChanged(value),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            initialValue: profile.allergies,
+            decoration: const InputDecoration(
+              labelText: 'Dị ứng',
+              hintText: 'Ví dụ: Dị ứng phấn hoa, hải sản...',
+              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
+            ),
+            maxLines: 4, // Cho phép nhập nhiều dòng
+            onChanged: (value) {
+              context.read<ProfileBloc>().add(ProfileAllergiesChanged(value));
+            },
+          ),
         ],
       ),
     );

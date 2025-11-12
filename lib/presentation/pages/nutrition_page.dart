@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/domain/entities/meal.dart';
 import 'package:health_tracker_app/domain/entities/meal_item.dart';
 import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
@@ -45,106 +44,101 @@ class NutritionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          sl<NutritionBloc>()..add(NutritionGetMeals(DateTime.now())),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Theo dõi Dinh dưỡng'),
-          actions: [
-            // Nút chọn ngày
-            BlocBuilder<NutritionBloc, NutritionState>(
-              builder: (context, state) {
-                return IconButton(
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  onPressed: () async {
-                    final DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: state.selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Theo dõi Dinh dưỡng'),
+        actions: [
+          // Nút chọn ngày
+          BlocBuilder<NutritionBloc, NutritionState>(
+            builder: (context, state) {
+              return IconButton(
+                icon: const Icon(Icons.calendar_today_outlined),
+                onPressed: () async {
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: state.selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (pickedDate != null && pickedDate != state.selectedDate) {
+                    context.read<NutritionBloc>().add(
+                      NutritionGetMeals(pickedDate),
                     );
-                    if (pickedDate != null &&
-                        pickedDate != state.selectedDate) {
-                      context.read<NutritionBloc>().add(
-                        NutritionGetMeals(pickedDate),
-                      );
-                    }
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-        body: BlocBuilder<NutritionBloc, NutritionState>(
-          builder: (context, state) {
-            if (state.status == NutritionStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (state.status == NutritionStatus.failure) {
-              return Center(child: Text('Lỗi: ${state.errorMessage}'));
-            }
+                  }
+                },
+              );
+            },
+          ),
+        ],
+      ),
+      body: BlocBuilder<NutritionBloc, NutritionState>(
+        builder: (context, state) {
+          if (state.status == NutritionStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.status == NutritionStatus.failure) {
+            return Center(child: Text('Lỗi: ${state.errorMessage}'));
+          }
 
-            // Tách danh sách bữa ăn
-            final breakfast = _findMeal(state.meals, MealType.BREAKFAST);
-            final lunch = _findMeal(state.meals, MealType.LUNCH);
-            final dinner = _findMeal(state.meals, MealType.DINNER);
-            final snack = _findMeal(state.meals, MealType.SNACK);
+          // Tách danh sách bữa ăn
+          final breakfast = _findMeal(state.meals, MealType.BREAKFAST);
+          final lunch = _findMeal(state.meals, MealType.LUNCH);
+          final dinner = _findMeal(state.meals, MealType.DINNER);
+          final snack = _findMeal(state.meals, MealType.SNACK);
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // 1. Tiêu đề (Ngày và Tổng Calo)
-                  _buildHeader(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // 1. Tiêu đề (Ngày và Tổng Calo)
+                _buildHeader(
+                  context,
+                  state.selectedDate,
+                  _calculateTotalCalories(state.meals),
+                ),
+                const SizedBox(height: 24),
+
+                // 2. Danh sách 4 bữa ăn (CẬP NHẬT onAdd)
+                _MealCard(
+                  title: 'Bữa sáng',
+                  meal: breakfast,
+                  onAdd: () => _navigateSearchFood(
                     context,
+                    MealType.BREAKFAST,
                     state.selectedDate,
-                    _calculateTotalCalories(state.meals),
                   ),
-                  const SizedBox(height: 24),
-
-                  // 2. Danh sách 4 bữa ăn (CẬP NHẬT onAdd)
-                  _MealCard(
-                    title: 'Bữa sáng',
-                    meal: breakfast,
-                    onAdd: () => _navigateSearchFood(
-                      context,
-                      MealType.BREAKFAST,
-                      state.selectedDate,
-                    ),
+                ),
+                _MealCard(
+                  title: 'Bữa trưa',
+                  meal: lunch,
+                  onAdd: () => _navigateSearchFood(
+                    context,
+                    MealType.LUNCH,
+                    state.selectedDate,
                   ),
-                  _MealCard(
-                    title: 'Bữa trưa',
-                    meal: lunch,
-                    onAdd: () => _navigateSearchFood(
-                      context,
-                      MealType.LUNCH,
-                      state.selectedDate,
-                    ),
+                ),
+                _MealCard(
+                  title: 'Bữa tối',
+                  meal: dinner,
+                  onAdd: () => _navigateSearchFood(
+                    context,
+                    MealType.DINNER,
+                    state.selectedDate,
                   ),
-                  _MealCard(
-                    title: 'Bữa tối',
-                    meal: dinner,
-                    onAdd: () => _navigateSearchFood(
-                      context,
-                      MealType.DINNER,
-                      state.selectedDate,
-                    ),
+                ),
+                _MealCard(
+                  title: 'Bữa phụ',
+                  meal: snack,
+                  onAdd: () => _navigateSearchFood(
+                    context,
+                    MealType.SNACK,
+                    state.selectedDate,
                   ),
-                  _MealCard(
-                    title: 'Bữa phụ',
-                    meal: snack,
-                    onAdd: () => _navigateSearchFood(
-                      context,
-                      MealType.SNACK,
-                      state.selectedDate,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -158,7 +152,7 @@ class NutritionPage extends StatelessWidget {
     return Column(
       children: [
         Text(
-          DateFormat.yMMMMEEEEd().format(date),
+          DateFormat.yMMMMEEEEd('vi_VN').format(date),
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),

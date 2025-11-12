@@ -21,8 +21,8 @@ class NotificationService {
     // 1. Khởi tạo Local Notifications
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings(
-          'notification_icon',
-        ); // Tên file icon của bạn
+          'notification_icon', // <--- TÊN FILE ICON
+        );
 
     // (Cấu hình cho iOS - bỏ qua nếu chỉ test Android)
     const DarwinInitializationSettings iosSettings =

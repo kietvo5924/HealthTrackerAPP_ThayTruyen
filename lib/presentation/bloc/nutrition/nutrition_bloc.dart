@@ -71,16 +71,6 @@ class NutritionBloc extends Bloc<NutritionEvent, NutritionState> {
     NutritionSearchFood event,
     Emitter<NutritionState> emit,
   ) async {
-    if (event.query.isEmpty) {
-      emit(
-        state.copyWith(
-          searchStatus: FoodSearchStatus.initial,
-          searchResults: [],
-        ),
-      );
-      return;
-    }
-
     emit(state.copyWith(searchStatus: FoodSearchStatus.loading));
 
     final result = await _searchFoodUseCase(event.query);

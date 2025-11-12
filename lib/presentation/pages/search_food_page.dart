@@ -27,6 +27,12 @@ class _SearchFoodPageState extends State<SearchFoodPage> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    context.read<NutritionBloc>().add(const NutritionSearchFood(''));
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -129,15 +135,14 @@ class _SearchFoodPageState extends State<SearchFoodPage> {
 
           // Hiển thị kết quả
           return ListView.builder(
+            // Thêm padding cho danh sách
+            padding: const EdgeInsets.only(bottom: 96), // Để không bị FAB che
             itemCount: state.searchResults.length,
             itemBuilder: (context, index) {
               final food = state.searchResults[index];
-              return ListTile(
-                title: Text(food.name),
-                subtitle: Text(
-                  '${food.calories.toInt()} kcal / 1 ${food.unit}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
+              // Sử dụng widget mới
+              return FoodSearchResultTile(
+                food: food,
                 onTap: () {
                   _showAddFoodDialog(context, food);
                 },
@@ -162,6 +167,133 @@ class _SearchFoodPageState extends State<SearchFoodPage> {
         label: const Text('Tạo món ăn'),
         icon: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+// --- THÊM CÁC WIDGET NÀY VÀO CUỐI FILE search_food_page.dart ---
+
+/// Widget mới để hiển thị kết quả tìm kiếm món ăn đẹp hơn
+class FoodSearchResultTile extends StatelessWidget {
+  final Food food;
+  final VoidCallback onTap;
+
+  const FoodSearchResultTile({
+    super.key,
+    required this.food,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hàng 1: Tên và Đơn vị
+              Text(
+                food.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                'trên 1 ${food.unit}', // Hiển thị đơn vị
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+
+              // Hàng 2: 4 thông số
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _MacroTile(
+                    label: 'Calo',
+                    value: food.calories,
+                    unit: 'kcal',
+                    color: Colors.orange,
+                  ),
+                  _MacroTile(
+                    label: 'Đạm',
+                    value: food.proteinGrams,
+                    unit: 'g',
+                    color: Colors.blue.shade600,
+                  ),
+                  _MacroTile(
+                    label: 'Carb',
+                    value: food.carbsGrams,
+                    unit: 'g',
+                    color: Colors.green.shade600,
+                  ),
+                  _MacroTile(
+                    label: 'Béo',
+                    value: food.fatGrams,
+                    unit: 'g',
+                    color: Colors.redAccent,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget con (helper) để hiển thị 1 thông số
+class _MacroTile extends StatelessWidget {
+  final String label;
+  final double value;
+  final String unit;
+  final Color color;
+
+  const _MacroTile({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Quyết định format (số nguyên cho Calo, 1 số lẻ cho macros)
+    final String valueString = (label == 'Calo')
+        ? value.toInt().toString()
+        : value.toStringAsFixed(1);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$valueString $unit',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

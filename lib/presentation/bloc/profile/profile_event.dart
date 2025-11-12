@@ -35,3 +35,13 @@ class ProfileAddressChanged extends ProfileEvent {
 
 // Event khi nhấn nút lưu
 class ProfileSubmitted extends ProfileEvent {}
+
+class ProfileMedicalHistoryChanged extends ProfileEvent {
+  final String medicalHistory;
+  const ProfileMedicalHistoryChanged(this.medicalHistory);
+}
+
+class ProfileAllergiesChanged extends ProfileEvent {
+  final String allergies;
+  const ProfileAllergiesChanged(this.allergies);
+}

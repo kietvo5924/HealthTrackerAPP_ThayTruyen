@@ -65,4 +65,18 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
       return Left(GenericFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, Workout>> toggleWorkoutLike(int workoutId) async {
+    try {
+      // Model là kiểu trả về của remoteDataSource
+      final workoutModel = await remoteDataSource.toggleWorkoutLike(workoutId);
+      // Trả về Entity (lớp cha)
+      return Right(workoutModel);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    } catch (e) {
+      return Left(GenericFailure(e.toString()));
+    }
+  }
 }
