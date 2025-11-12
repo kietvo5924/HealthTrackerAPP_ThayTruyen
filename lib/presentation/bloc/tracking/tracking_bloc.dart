@@ -10,7 +10,7 @@ part 'tracking_state.dart';
 class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
   final Location _location;
   StreamSubscription<LocationData>? _locationSubscription;
-  Timer? _timer;
+  Timer? _timer; // Bây giờ chúng ta sẽ dùng biến này
 
   TrackingBloc({required Location location})
     : _location = location,
@@ -20,12 +20,15 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
     on<TrackingPaused>(_onTrackingPaused);
     on<TrackingStopped>(_onTrackingStopped);
     on<_TrackingLocationChanged>(_onTrackingLocationChanged);
+
+    // Đăng ký event xử lý timer
+    on<_TrackingTimerTicked>(_onTimerTicked);
   }
 
   @override
   Future<void> close() {
     _locationSubscription?.cancel();
-    _timer?.cancel();
+    _timer?.cancel(); // Đảm bảo timer bị hủy khi BLoC đóng
     return super.close();
   }
 
@@ -83,63 +86,44 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
     }
   }
 
-  // ----- BẮT ĐẦU SỬA LỖI 1 (BLoC) -----
-  // Dùng Emitter.forEach để giữ event handler "sống"
-  Future<void> _onTrackingResumed(
-    TrackingResumed event,
-    Emitter<TrackingState> emit,
-  ) async {
-    await _locationSubscription?.cancel();
-    _timer?.cancel();
-
+  // Sửa lỗi: Dùng Timer và add event
+  void _onTrackingResumed(TrackingResumed event, Emitter<TrackingState> emit) {
     emit(state.copyWith(status: TrackingStatus.tracking));
 
-    // Lắng nghe GPS
+    // Bắt đầu timer
+    _timer?.cancel(); // Hủy timer cũ (nếu có)
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // THAY VÌ EMIT, CHÚNG TA ADD EVENT
+      add(_TrackingTimerTicked());
+    });
+
+    // Bắt đầu lắng nghe GPS
+    _locationSubscription?.cancel();
     _locationSubscription = _location.onLocationChanged.listen((
       LocationData currentLocation,
     ) {
       add(_TrackingLocationChanged(currentLocation));
     });
-
-    // Dùng Emitter.forEach cho Timer
-    // Nó sẽ giữ event handler này "sống"
-    await emit.forEach<int>(
-      Stream.periodic(const Duration(seconds: 1), (x) => x),
-      onData: (tick) {
-        return state.copyWith(durationInSeconds: state.durationInSeconds + 1);
-      },
-    );
   }
 
-  Future<void> _onTrackingPaused(
-    TrackingPaused event,
-    Emitter<TrackingState> emit,
-  ) async {
-    // Khi pause, chúng ta phải hủy các stream
-    await _locationSubscription?.cancel();
-    _timer?.cancel();
-
-    // (Quan trọng) Hủy Emitter.forEach của _onTrackingResumed
-    // bằng cách emit một state MỚI (không phải từ forEach)
+  // Sửa lỗi: Hàm này giờ sẽ hoạt động
+  void _onTrackingPaused(TrackingPaused event, Emitter<TrackingState> emit) {
+    _timer?.cancel(); // Hủy timer
+    _locationSubscription?.cancel(); // Hủy GPS
     emit(state.copyWith(status: TrackingStatus.paused));
   }
 
-  Future<void> _onTrackingStopped(
-    TrackingStopped event,
-    Emitter<TrackingState> emit,
-  ) async {
-    // Tương tự _onTrackingPaused, hủy mọi thứ
-    await _locationSubscription?.cancel();
-    _timer?.cancel();
+  // Sửa lỗi: Hàm này giờ sẽ hoạt động
+  void _onTrackingStopped(TrackingStopped event, Emitter<TrackingState> emit) {
+    _timer?.cancel(); // Hủy timer
+    _locationSubscription?.cancel(); // Hủy GPS
     emit(state.copyWith(status: TrackingStatus.success));
   }
-  // ----- KẾT THÚC SỬA LỖI 1 -----
 
   void _onTrackingLocationChanged(
     _TrackingLocationChanged event,
     Emitter<TrackingState> emit,
   ) {
-    // (Kiểm tra xem BLoC còn hoạt động không)
     if (emit.isDone) return;
 
     final newPoint = LatLng(
@@ -153,5 +137,12 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
         routePoints: [...state.routePoints, newPoint], // Thêm điểm mới
       ),
     );
+  }
+
+  // Hàm xử lý Timer Tick
+  void _onTimerTicked(_TrackingTimerTicked event, Emitter<TrackingState> emit) {
+    if (emit.isDone) return;
+
+    emit(state.copyWith(durationInSeconds: state.durationInSeconds + 1));
   }
 }

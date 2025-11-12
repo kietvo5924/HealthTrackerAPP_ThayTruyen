@@ -24,3 +24,6 @@ class _TrackingLocationChanged extends TrackingEvent {
   final LocationData locationData;
   const _TrackingLocationChanged(this.locationData);
 }
+
+// Event nội bộ, được Timer gọi mỗi giây
+class _TrackingTimerTicked extends TrackingEvent {}

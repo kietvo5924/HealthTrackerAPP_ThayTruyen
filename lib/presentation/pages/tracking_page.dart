@@ -47,6 +47,12 @@ class _TrackingPageState extends State<TrackingPage> {
     final distance = _calculateDistance(trackingState.routePoints);
     final duration = trackingState.durationInSeconds;
 
+    // --- SỬA LỖI Ở ĐÂY (logic tính phút) ---
+    // Làm tròn LÊN (ceil) thay vì làm tròn (round)
+    // 30 giây -> 1 phút (thay vì 0)
+    final int durationInMinutes = (duration / 60).ceil();
+    // --- KẾT THÚC SỬA LỖI ---
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -101,7 +107,8 @@ class _TrackingPageState extends State<TrackingPage> {
                             onPressed: () {
                               final params = LogWorkoutParams(
                                 workoutType: _selectedType,
-                                durationInMinutes: (duration / 60).round(),
+                                // Dùng biến đã tính
+                                durationInMinutes: durationInMinutes,
                                 startedAt: DateTime.now().toUtc(),
                                 caloriesBurned: null, // (Có thể tính sau)
                                 distanceInKm: distance,
@@ -310,13 +317,11 @@ class _TrackingPageState extends State<TrackingPage> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           FloatingActionButton(
-            // --- SỬA LỖI 2 (Hero) ---
             heroTag: 'pause_button',
             onPressed: () => bloc.add(TrackingPaused()),
             child: const Icon(Icons.pause),
           ),
           FloatingActionButton(
-            // --- SỬA LỖI 2 (Hero) ---
             heroTag: 'stop_button',
             onPressed: () => bloc.add(TrackingStopped()),
             backgroundColor: Colors.red,
@@ -330,13 +335,11 @@ class _TrackingPageState extends State<TrackingPage> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           FloatingActionButton(
-            // --- SỬA LỖI 2 (Hero) ---
             heroTag: 'play_button',
             onPressed: () => bloc.add(TrackingResumed()),
             child: const Icon(Icons.play_arrow),
           ),
           FloatingActionButton(
-            // --- SỬA LỖI 2 (Hero) ---
             heroTag: 'stop_button_paused',
             onPressed: () => bloc.add(TrackingStopped()),
             backgroundColor: Colors.red,

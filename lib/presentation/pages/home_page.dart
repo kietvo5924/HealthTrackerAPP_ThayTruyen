@@ -10,6 +10,24 @@ import 'package:intl/intl.dart';
 import 'package:health_tracker_app/presentation/pages/statistics_page.dart';
 import 'package:health_tracker_app/presentation/widgets/circular_health_tile.dart';
 
+// --- TẠO HÀM HELPER MỚI (Ở BÊN NGOÀI CLASS) ---
+// Hàm này sẽ trả về "Hôm nay", "Hôm qua", hoặc "dd/MM/yyyy"
+String _buildTitle(DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = DateTime(now.year, now.month, now.day - 1);
+  final selectedDay = DateTime(date.year, date.month, date.day);
+
+  if (selectedDay == today) {
+    return 'Hôm nay';
+  } else if (selectedDay == yesterday) {
+    return 'Hôm qua';
+  } else {
+    return DateFormat.yMMMd().format(date); // Ví dụ: 10 thg 11, 2025
+  }
+}
+// --- KẾT THÚC HÀM HELPER ---
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -17,77 +35,117 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<HealthDataBloc>(),
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade100,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            'Tổng quan',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.bar_chart, color: Colors.black),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const StatisticsPage(),
+      // --- SỬA ĐỔI: BỌC SCAFFOLD BẰNG BLOCBUILDER ---
+      child: BlocBuilder<HealthDataBloc, HealthDataState>(
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: Colors.grey.shade100,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              // Tiêu đề động (dynamic)
+              title: Text(
+                _buildTitle(state.healthData.date),
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                ),
+              ),
+              actions: [
+                // --- THÊM MỚI: NÚT CHỌN NGÀY ---
+                IconButton(
+                  icon: const Icon(
+                    Icons.calendar_today_outlined,
+                    color: Colors.black,
                   ),
-                );
+                  onPressed: () async {
+                    // 1. Hiển thị DatePicker
+                    final DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: state.healthData.date,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(), // Không cho chọn ngày tương lai
+                    );
+
+                    // 2. Nếu người dùng chọn ngày mới
+                    if (pickedDate != null &&
+                        pickedDate != state.healthData.date) {
+                      // 3. Gọi BLoC để tải dữ liệu cho ngày đó
+                      context.read<HealthDataBloc>().add(
+                        HealthDataFetched(pickedDate),
+                      );
+                    }
+                  },
+                ),
+
+                // --- KẾT THÚC THÊM MỚI ---
+                IconButton(
+                  icon: const Icon(Icons.bar_chart, color: Colors.black),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const StatisticsPage(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person, color: Colors.black),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const ProfilePage(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.black),
+                  onPressed: () {
+                    context.read<AuthBloc>().add(AuthLoggedOut());
+                  },
+                ),
+              ],
+            ),
+
+            // --- SỬA ĐỔI: Bỏ BlocConsumer (vì đã có ở trên) ---
+            body: BlocConsumer<HealthDataBloc, HealthDataState>(
+              // (Chúng ta giữ BlocConsumer ở đây để xử lý SnackBar)
+              listener: (context, state) {
+                if (state.status == HealthDataStatus.failure) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
+                    );
+                }
+              },
+              builder: (context, state) {
+                if (state.status == HealthDataStatus.initial) {
+                  context.read<HealthDataBloc>().add(
+                    HealthDataFetched(DateTime.now()),
+                  );
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (state.status == HealthDataStatus.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (state.status == HealthDataStatus.failure &&
+                    state.healthData.id == null) {
+                  return Center(child: Text('Lỗi: ${state.errorMessage}'));
+                }
+
+                // Hiển thị Dashboard
+                return HealthDataDashboard(healthData: state.healthData);
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.person, color: Colors.black),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout, color: Colors.black),
-              onPressed: () {
-                context.read<AuthBloc>().add(AuthLoggedOut());
-              },
-            ),
-          ],
-        ),
-        body: BlocConsumer<HealthDataBloc, HealthDataState>(
-          listener: (context, state) {
-            if (state.status == HealthDataStatus.failure) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
-                );
-            }
-          },
-          builder: (context, state) {
-            if (state.status == HealthDataStatus.initial) {
-              context.read<HealthDataBloc>().add(
-                HealthDataFetched(DateTime.now()),
-              );
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state.status == HealthDataStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state.status == HealthDataStatus.failure &&
-                state.healthData.id == null) {
-              return Center(child: Text('Lỗi: ${state.errorMessage}'));
-            }
-
-            return HealthDataDashboard(healthData: state.healthData);
-          },
-        ),
+          );
+        },
       ),
+      // --- KẾT THÚC SỬA ĐỔI ---
     );
   }
 }
@@ -111,18 +169,29 @@ class HealthDataDashboard extends StatelessWidget {
     final double caloriesProgress =
         (healthData.caloriesBurnt ?? 0) / caloriesGoal;
 
+    // --- SỬA ĐỔI: Kiểm tra xem có phải hôm nay không ---
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDay = DateTime(
+      healthData.date.year,
+      healthData.date.month,
+      healthData.date.day,
+    );
+    final bool isToday = (selectedDay == today);
+    // --- KẾT THÚC SỬA ĐỔI ---
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Hôm nay, ${DateFormat.yMMMd().format(healthData.date)}',
+            // Dùng lại hàm helper
+            _buildTitle(healthData.date),
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
 
-          // ----- SỬA LỖI: Thay GridView bằng Column -----
           Column(
             children: [
               // 1. Bước đi
@@ -134,14 +203,26 @@ class HealthDataDashboard extends StatelessWidget {
                 progress: stepProgress > 1.0 ? 1.0 : stepProgress,
                 progressColor: Colors.orange,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Số bước đi được cập nhật tự động.'),
-                    ),
-                  );
+                  // Chỉ cho phép sửa/xem nếu là hôm nay (vì cảm biến đang chạy)
+                  if (isToday) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Số bước đi được cập nhật tự động.'),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Chỉ có thể xem, không thể sửa bước đi của ngày cũ.',
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
-              const SizedBox(height: 12), // Thêm khoảng cách
+              const SizedBox(height: 12),
+
               // 2. Nước uống
               CircularHealthTile(
                 label: 'Nước uống',
@@ -151,6 +232,19 @@ class HealthDataDashboard extends StatelessWidget {
                 progress: waterProgress > 1.0 ? 1.0 : waterProgress,
                 progressColor: Colors.blue,
                 onTap: () {
+                  // --- SỬA ĐỔI: Chỉ cho phép sửa nếu là hôm nay ---
+                  if (!isToday) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Chỉ có thể nhập dữ liệu cho ngày hôm nay.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  // --- KẾT THÚC SỬA ĐỔI ---
+
                   _showLogDialog(
                     context,
                     title: 'Nhập lượng nước đã uống',
@@ -168,7 +262,8 @@ class HealthDataDashboard extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: 12), // Thêm khoảng cách
+              const SizedBox(height: 12),
+
               // 3. Giấc ngủ
               CircularHealthTile(
                 label: 'Giấc ngủ',
@@ -178,6 +273,16 @@ class HealthDataDashboard extends StatelessWidget {
                 progress: sleepProgress > 1.0 ? 1.0 : sleepProgress,
                 progressColor: Colors.purple,
                 onTap: () {
+                  if (!isToday) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Chỉ có thể nhập dữ liệu cho ngày hôm nay.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
                   _showLogDialog(
                     context,
                     title: 'Nhập số giờ ngủ',
@@ -195,7 +300,8 @@ class HealthDataDashboard extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: 12), // Thêm khoảng cách
+              const SizedBox(height: 12),
+
               // 4. Calo
               CircularHealthTile(
                 label: 'Calo tiêu thụ',
@@ -205,6 +311,16 @@ class HealthDataDashboard extends StatelessWidget {
                 progress: caloriesProgress > 1.0 ? 1.0 : caloriesProgress,
                 progressColor: Colors.red,
                 onTap: () {
+                  if (!isToday) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Chỉ có thể nhập dữ liệu cho ngày hôm nay.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
                   _showLogDialog(
                     context,
                     title: 'Nhập calo tiêu thụ',
@@ -225,7 +341,6 @@ class HealthDataDashboard extends StatelessWidget {
             ],
           ),
 
-          // ----- KẾT THÚC SỬA LỖI -----
           const SizedBox(height: 20),
           Text(
             'Cân nặng hiện tại',
@@ -238,6 +353,14 @@ class HealthDataDashboard extends StatelessWidget {
             label: 'Cân nặng',
             value: '${healthData.weight?.toString() ?? 'N/A'} kg',
             onTap: () {
+              if (!isToday) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Chỉ có thể nhập dữ liệu cho ngày hôm nay.'),
+                  ),
+                );
+                return;
+              }
               _showLogDialog(
                 context,
                 title: 'Nhập cân nặng',
