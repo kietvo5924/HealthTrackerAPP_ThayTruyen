@@ -7,6 +7,7 @@ abstract class AuthLocalDataSource {
   Future<void> deleteToken();
 }
 
+// ignore: constant_identifier_names
 const CACHED_AUTH_TOKEN = 'auth_token';
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {

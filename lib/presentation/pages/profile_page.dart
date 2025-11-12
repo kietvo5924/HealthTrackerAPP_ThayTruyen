@@ -27,6 +27,7 @@ class ProfilePage extends StatelessWidget {
                   SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
                 );
             } else if (state.status == ProfileStatus.success &&
+                // ignore: prefer_is_not_empty
                 !state.userProfile!.fullName.isEmpty) {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
@@ -170,6 +171,7 @@ class _DateOfBirthPicker extends StatelessWidget {
           lastDate: DateTime.now(),
         );
         if (newDate != null) {
+          // ignore: use_build_context_synchronously
           context.read<ProfileBloc>().add(ProfileDateOfBirthChanged(newDate));
         }
       },

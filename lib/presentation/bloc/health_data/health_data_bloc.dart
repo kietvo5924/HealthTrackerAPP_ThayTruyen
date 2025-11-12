@@ -33,6 +33,8 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
     on<HealthDataStepSensorStarted>(_onStepSensorStarted);
     on<HealthDataStepSensorUpdated>(_onStepSensorUpdated); // Đổi tên event
     on<HealthDataStepsSaved>(_onHealthDataStepsSaved);
+    on<HealthDataSleepChanged>(_onHealthDataSleepChanged);
+    on<HealthDataCaloriesChanged>(_onHealthDataCaloriesChanged);
   }
 
   @override
@@ -102,6 +104,43 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
       sleepHours: state.healthData.sleepHours,
       waterIntake: state.healthData.waterIntake,
       weight: event.weight, // Cập nhật
+    );
+    emit(state.copyWith(healthData: updatedData));
+  }
+
+  // Hàm này chỉ cập nhật state ở UI, chưa gọi API
+  void _onHealthDataSleepChanged(
+    HealthDataSleepChanged event,
+    Emitter<HealthDataState> emit,
+  ) {
+    final updatedData = HealthDataModel(
+      id: state.healthData.id,
+      date: state.healthData.date,
+      steps: state.healthData.steps,
+      caloriesBurnt: state.healthData.caloriesBurnt,
+      sleepHours: event.sleepHours, // Cập nhật
+      waterIntake: state.healthData.waterIntake,
+      weight: state.healthData.weight,
+    );
+    emit(state.copyWith(healthData: updatedData));
+  }
+
+  // Hàm này chỉ cập nhật state ở UI, chưa gọi API
+  void _onHealthDataCaloriesChanged(
+    HealthDataCaloriesChanged event,
+    Emitter<HealthDataState> emit,
+  ) {
+    // Lưu ý: Chúng ta dùng chung trường 'caloriesBurnt' cho 'calo tiêu thụ'
+    // Nếu backend của bạn có trường riêng (ví dụ: caloriesConsumed),
+    // bạn cần cập nhật HealthDataModel
+    final updatedData = HealthDataModel(
+      id: state.healthData.id,
+      date: state.healthData.date,
+      steps: state.healthData.steps,
+      caloriesBurnt: event.calories, // Cập nhật
+      sleepHours: state.healthData.sleepHours,
+      waterIntake: state.healthData.waterIntake,
+      weight: state.healthData.weight,
     );
     emit(state.copyWith(healthData: updatedData));
   }
@@ -254,16 +293,19 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
     Emitter<HealthDataState> emit,
   ) async {
     // KHÔNG emit(loading) để tránh làm giật UI
+    // ignore: avoid_print
     print('Tự động lưu số bước đi: ${state.healthData.steps}');
     final result = await _logHealthDataUseCase(state.healthData);
 
     result.fold(
       (failure) {
         // Chỉ in ra lỗi, không emit failure để không ảnh hưởng UI
+        // ignore: avoid_print
         print('Lỗi tự động lưu bước đi: ${failure.message}');
       },
       (updatedHealthData) {
         // Lưu thành công, cập nhật lại state (với ID mới nếu có)
+        // ignore: avoid_print
         print('Đã lưu bước đi thành công.');
         emit(state.copyWith(healthData: updatedHealthData));
       },

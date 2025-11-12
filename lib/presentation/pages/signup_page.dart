@@ -18,8 +18,18 @@ class SignupPage extends StatelessWidget {
   }
 }
 
-class SignupForm extends StatelessWidget {
+class SignupForm extends StatefulWidget {
   const SignupForm({super.key});
+
+  @override
+  State<SignupForm> createState() => _SignupFormState();
+}
+
+// --- CHUYỂN SANG STATEFULWIDGET ĐỂ DÙNG FORMENT ---
+class _SignupFormState extends State<SignupForm> {
+  // --- THÊM MỚI ---
+  final _formKey = GlobalKey<FormState>();
+  // --- KẾT THÚC THÊM MỚI ---
 
   @override
   Widget build(BuildContext context) {
@@ -38,22 +48,28 @@ class SignupForm extends StatelessWidget {
           Navigator.of(context).pop();
         }
       },
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _FullNameInput(),
-            const SizedBox(height: 16),
-            _PhoneNumberInput(),
-            const SizedBox(height: 16),
-            _EmailInput(),
-            const SizedBox(height: 16),
-            _PasswordInput(),
-            const SizedBox(height: 32),
-            _SignupButton(),
-          ],
+      // --- THÊM MỚI (Bọc bằng Form) ---
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              _FullNameInput(),
+              const SizedBox(height: 16),
+              _PhoneNumberInput(),
+              const SizedBox(height: 16),
+              _EmailInput(),
+              const SizedBox(height: 16),
+              _PasswordInput(),
+              const SizedBox(height: 32),
+              // Truyền _formKey vào nút bấm
+              _SignupButton(formKey: _formKey),
+            ],
+          ),
         ),
       ),
+      // --- KẾT THÚC THÊM MỚI ---
     );
   }
 }
@@ -64,7 +80,8 @@ class _FullNameInput extends StatelessWidget {
     return BlocBuilder<SignupBloc, SignupState>(
       buildWhen: (p, c) => p.fullName != c.fullName,
       builder: (context, state) {
-        return TextField(
+        // --- SỬA ĐỔI (Thêm TextFormField và validator) ---
+        return TextFormField(
           onChanged: (value) {
             context.read<SignupBloc>().add(SignupFullNameChanged(value));
           },
@@ -73,7 +90,15 @@ class _FullNameInput extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           keyboardType: TextInputType.name,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Họ tên không được để trống';
+            }
+            return null;
+          },
         );
+        // --- KẾT THÚC SỬA ĐỔI ---
       },
     );
   }
@@ -85,7 +110,8 @@ class _PhoneNumberInput extends StatelessWidget {
     return BlocBuilder<SignupBloc, SignupState>(
       buildWhen: (p, c) => p.phoneNumber != c.phoneNumber,
       builder: (context, state) {
-        return TextField(
+        // --- SỬA ĐỔI (Thêm TextFormField và validator) ---
+        return TextFormField(
           onChanged: (value) {
             context.read<SignupBloc>().add(SignupPhoneNumberChanged(value));
           },
@@ -94,7 +120,18 @@ class _PhoneNumberInput extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           keyboardType: TextInputType.phone,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Số điện thoại không được để trống';
+            }
+            if (value.length != 10) {
+              return 'Số điện thoại phải có đúng 10 chữ số';
+            }
+            return null;
+          },
         );
+        // --- KẾT THÚC SỬA ĐỔI ---
       },
     );
   }
@@ -106,7 +143,8 @@ class _EmailInput extends StatelessWidget {
     return BlocBuilder<SignupBloc, SignupState>(
       buildWhen: (p, c) => p.email != c.email,
       builder: (context, state) {
-        return TextField(
+        // --- SỬA ĐỔI (Thêm TextFormField và validator) ---
+        return TextFormField(
           onChanged: (value) {
             context.read<SignupBloc>().add(SignupEmailChanged(value));
           },
@@ -115,7 +153,20 @@ class _EmailInput extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           keyboardType: TextInputType.emailAddress,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Email không được để trống';
+            }
+            // Biểu thức chính quy (RegExp) đơn giản để kiểm tra email
+            final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+            if (!emailRegex.hasMatch(value)) {
+              return 'Email không đúng định dạng';
+            }
+            return null;
+          },
         );
+        // --- KẾT THÚC SỬA ĐỔI ---
       },
     );
   }
@@ -127,7 +178,8 @@ class _PasswordInput extends StatelessWidget {
     return BlocBuilder<SignupBloc, SignupState>(
       buildWhen: (p, c) => p.password != c.password,
       builder: (context, state) {
-        return TextField(
+        // --- SỬA ĐỔI (Thêm TextFormField và validator) ---
+        return TextFormField(
           onChanged: (value) {
             context.read<SignupBloc>().add(SignupPasswordChanged(value));
           },
@@ -136,13 +188,29 @@ class _PasswordInput extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           obscureText: true,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Mật khẩu không được để trống';
+            }
+            if (value.length < 6) {
+              return 'Mật khẩu phải có ít nhất 6 ký tự';
+            }
+            return null;
+          },
         );
+        // --- KẾT THÚC SỬA ĐỔI ---
       },
     );
   }
 }
 
 class _SignupButton extends StatelessWidget {
+  // --- THÊM MỚI ---
+  final GlobalKey<FormState> formKey;
+  const _SignupButton({required this.formKey});
+  // --- KẾT THÚC THÊM MỚI ---
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SignupBloc, SignupState>(
@@ -154,9 +222,22 @@ class _SignupButton extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
+                // --- CẬP NHẬT onPressed ---
                 onPressed: () {
-                  context.read<SignupBloc>().add(SignupSubmitted());
+                  // Kiểm tra xem form có hợp lệ không
+                  if (formKey.currentState?.validate() ?? false) {
+                    // Nếu hợp lệ, submit
+                    context.read<SignupBloc>().add(SignupSubmitted());
+                  } else {
+                    // Nếu không hợp lệ, hiển thị SnackBar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Vui lòng kiểm tra lại thông tin'),
+                      ),
+                    );
+                  }
                 },
+                // --- KẾT THÚC CẬP NHẬT ---
                 child: const Text('ĐĂNG KÝ'),
               );
       },

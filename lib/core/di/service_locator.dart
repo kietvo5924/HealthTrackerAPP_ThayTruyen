@@ -35,6 +35,17 @@ import 'package:health_tracker_app/presentation/bloc/signup/signup_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/statistics/statistics_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// --- THÊM IMPORT MỚI ---
+import 'package:location/location.dart';
+import 'package:health_tracker_app/presentation/bloc/tracking/tracking_bloc.dart';
+import 'package:health_tracker_app/data/datasources/remote/workout_remote_data_source.dart';
+import 'package:health_tracker_app/data/repositories/workout_repository_impl.dart';
+import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
+import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
+import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
+// --- KẾT THÚC THÊM MỚI ---
+
 final sl = GetIt.instance; // sl = Service Locator
 
 Future<void> init() async {
@@ -50,6 +61,11 @@ Future<void> init() async {
   // 3. Firebase
   sl.registerSingleton(FirebaseMessaging.instance);
   sl.registerSingleton(FlutterLocalNotificationsPlugin());
+
+  // --- THÊM MỚI ---
+  // 4. Location
+  sl.registerSingleton(Location());
+  // --- KẾT THÚC THÊM MỚI ---
 
   // ### DataSources ###
   sl.registerLazySingleton<AuthRemoteDataSource>(
@@ -67,6 +83,9 @@ Future<void> init() async {
   sl.registerLazySingleton<NotificationRemoteDataSource>(
     () => NotificationRemoteDataSourceImpl(sl()),
   );
+  sl.registerLazySingleton<WorkoutRemoteDataSource>(
+    () => WorkoutRemoteDataSourceImpl(sl()),
+  );
 
   // ### Repositories ###
   sl.registerLazySingleton<AuthRepository>(
@@ -81,9 +100,11 @@ Future<void> init() async {
   sl.registerLazySingleton<NotificationRepository>(
     () => NotificationRepositoryImpl(sl(), sl()),
   );
+  sl.registerLazySingleton<WorkoutRepository>(
+    () => WorkoutRepositoryImpl(remoteDataSource: sl()),
+  );
 
   // ### UseCases ###
-  // (Đăng ký TẤT CẢ UseCase trước)
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => SignupUseCase(sl()));
   sl.registerLazySingleton(() => GetAuthTokenUseCase(sl()));
@@ -98,13 +119,15 @@ Future<void> init() async {
 
   sl.registerLazySingleton(() => SaveFcmTokenUseCase(sl()));
 
+  sl.registerLazySingleton(() => GetMyWorkoutsUseCase(sl()));
+  sl.registerLazySingleton(() => LogWorkoutUseCase(sl()));
+
   // ### BLoCs ###
-  // (Đăng ký TẤT CẢ BLoC sau)
   sl.registerSingleton<AuthBloc>(
     AuthBloc(
       getAuthTokenUseCase: sl(),
       logoutUseCase: sl(),
-      saveFcmTokenUseCase: sl(), // Giờ nó sẽ tìm thấy
+      saveFcmTokenUseCase: sl(),
     ),
   );
   sl.registerFactory<LoginBloc>(
@@ -124,8 +147,12 @@ Future<void> init() async {
   sl.registerFactory<StatisticsBloc>(
     () => StatisticsBloc(getHealthDataRangeUseCase: sl()),
   );
+  sl.registerFactory<WorkoutBloc>(
+    () => WorkoutBloc(getMyWorkoutsUseCase: sl(), logWorkoutUseCase: sl()),
+  );
+
+  sl.registerFactory<TrackingBloc>(() => TrackingBloc(location: sl()));
 
   // ### Services ###
-  // (Đăng ký Services)
   sl.registerLazySingleton(() => NotificationService(sl(), sl()));
 }

@@ -3,6 +3,7 @@ import 'package:health_tracker_app/core/error/failures.dart';
 
 // Type: Kiểu dữ liệu trả về khi thành công
 // Params: Tham số đầu vào cho usecase
+// ignore: avoid_types_as_parameter_names
 abstract class UseCase<Type, Params> {
   Future<Either<Failure, Type>> call(Params params);
 }

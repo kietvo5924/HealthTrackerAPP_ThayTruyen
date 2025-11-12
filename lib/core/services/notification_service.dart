@@ -6,10 +6,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Bạn có thể xử lý data ở đây nếu cần
+  // ignore: avoid_print
   print("Handling a background message: ${message.messageId}");
 }
 
 class NotificationService {
+  // ignore: unused_field
   final FirebaseMessaging _fcm;
   final FlutterLocalNotificationsPlugin _localNotifications;
 
@@ -39,10 +41,13 @@ class NotificationService {
 
     // 2. Lắng nghe thông báo khi app đang ở FOREGROUND
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      // ignore: avoid_print
       print('Got a message whilst in the foreground!');
+      // ignore: avoid_print
       print('Message data: ${message.data}');
 
       if (message.notification != null) {
+        // ignore: avoid_print
         print('Message also contained a notification: ${message.notification}');
         // Hiển thị thông báo local
         _showLocalNotification(message);
@@ -51,6 +56,7 @@ class NotificationService {
 
     // 3. Lắng nghe khi app ở BACKGROUND (bấm vào thông báo)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      // ignore: avoid_print
       print('A new onMessageOpenedApp event was published!');
       // (Bạn có thể điều hướng đến một trang cụ thể ở đây)
     });
@@ -60,6 +66,7 @@ class NotificationService {
       RemoteMessage? message,
     ) {
       if (message != null) {
+        // ignore: avoid_print
         print('App opened from terminated state by a notification!');
         // (Bạn có thể điều hướng đến một trang cụ thể ở đây)
       }

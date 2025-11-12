@@ -61,6 +61,11 @@ dependencies:
   # Để hiển thị thông báo khi app đang chạy (foreground)
   flutter_local_notifications: ^17.1.2
 
+  flutter_map: ^7.0.1
+  # Lấy vị trí GPS
+  location: ^6.0.2
+  latlong2: ^0.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

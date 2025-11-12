@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/di/service_locator.dart';
+import 'package:health_tracker_app/data/models/health_data_model.dart';
 import 'package:health_tracker_app/domain/entities/health_data.dart';
 import 'package:health_tracker_app/presentation/bloc/statistics/statistics_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -29,14 +30,31 @@ class StatisticsPage extends StatelessWidget {
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Biểu đồ Nước uống (lít)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
-                  // Biểu đồ
-                  WaterChart(dataList: state.healthDataList),
+
+                  // ----- BẮT ĐẦU SỬA LỖI -----
+                  // Bọc biểu đồ bằng SingleChildScrollView (cuộn ngang)
+                  // và một SizedBox (để đặt kích thước cố định)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      // Đặt chiều rộng cố định (lớn hơn màn hình)
+                      width: 500,
+                      // Đặt chiều cao cố định
+                      height: 300,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16, top: 16),
+                        child: WaterChart(dataList: state.healthDataList),
+                      ),
+                    ),
+                  ),
+                  // ----- KẾT THÚC SỬA LỖI -----
 
                   // (Bạn có thể thêm các biểu đồ khác ở đây)
                 ],
@@ -67,7 +85,7 @@ class WaterChart extends StatelessWidget {
         (item) =>
             DateFormat('yyyy-MM-dd').format(item.date) ==
             DateFormat('yyyy-MM-dd').format(date),
-        orElse: () => HealthData(date: date),
+        orElse: () => HealthDataModel(date: date),
       );
 
       barGroups.add(
@@ -77,7 +95,7 @@ class WaterChart extends StatelessWidget {
             BarChartRodData(
               toY: data.waterIntake ?? 0,
               color: Theme.of(context).primaryColor,
-              width: 16,
+              width: 22, // Tăng độ rộng của thanh
               borderRadius: BorderRadius.circular(4),
             ),
           ],
@@ -85,65 +103,59 @@ class WaterChart extends StatelessWidget {
       );
     }
 
-    return AspectRatio(
-      aspectRatio: 1.5,
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 5, // 5 lít là tối đa
-          barTouchData: BarTouchData(enabled: true),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  // value là 0 -> 6
-                  final daysAgo = 6 - value.toInt();
-                  final date = today.subtract(Duration(days: daysAgo));
+    // ----- SỬA LỖI: Bỏ AspectRatio -----
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: 5, // 5 lít là tối đa
+        barTouchData: BarTouchData(enabled: true),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (double value, TitleMeta meta) {
+                // value là 0 -> 6
+                final daysAgo = 6 - value.toInt();
+                final date = today.subtract(Duration(days: daysAgo));
 
-                  // ----- SỬA LỖI 1: Xóa 'axisSide' -----
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 4.0,
+                  child: Text(DateFormat('dd/MM').format(date)),
+                );
+              },
+              reservedSize: 38,
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (double value, TitleMeta meta) {
+                if (value % 1 == 0 && value <= 5) {
                   return SideTitleWidget(
                     meta: meta,
                     space: 4.0,
-                    child: Text(DateFormat('dd/MM').format(date)),
+                    child: Text(
+                      value.toInt().toString(),
+                      style: const TextStyle(fontSize: 10),
+                      textAlign: TextAlign.left,
+                    ),
                   );
-                },
-                reservedSize: 38,
-              ),
+                }
+                return SideTitleWidget(meta: meta, child: const Text(''));
+              },
             ),
-
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28, // Kích thước dành cho nhãn
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  // ----- SỬA LỖI 2: Trả về 'SideTitleWidget' -----
-                  if (value % 1 == 0 && value <= 5) {
-                    return SideTitleWidget(
-                      meta: meta,
-                      space: 4.0,
-                      child: Text(
-                        value.toInt().toString(),
-                        style: const TextStyle(fontSize: 10),
-                        textAlign: TextAlign.left,
-                      ),
-                    );
-                  }
-                  // Trả về một SideTitleWidget rỗng
-                  return SideTitleWidget(meta: meta, child: const Text(''));
-                },
-              ),
-            ),
-
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          borderData: FlBorderData(show: false),
-          gridData: FlGridData(show: true),
-          barGroups: barGroups,
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
+        borderData: FlBorderData(show: false),
+        gridData: FlGridData(show: true),
+        barGroups: barGroups,
       ),
     );
+    // ----- KẾT THÚC SỬA LỖI -----
   }
 }

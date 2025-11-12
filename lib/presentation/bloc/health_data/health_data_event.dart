@@ -36,3 +36,13 @@ class HealthDataStepSensorUpdated extends HealthDataEvent {
 
 // Event nội bộ, để lưu số bước đi vào API (một cách âm thầm)
 class HealthDataStepsSaved extends HealthDataEvent {}
+
+class HealthDataSleepChanged extends HealthDataEvent {
+  final double sleepHours;
+  const HealthDataSleepChanged(this.sleepHours);
+}
+
+class HealthDataCaloriesChanged extends HealthDataEvent {
+  final double calories;
+  const HealthDataCaloriesChanged(this.calories);
+}

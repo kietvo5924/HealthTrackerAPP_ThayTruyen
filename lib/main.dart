@@ -4,8 +4,8 @@ import 'package:health_tracker_app/core/di/service_locator.dart' as di;
 import 'package:health_tracker_app/core/services/notification_service.dart';
 import 'package:health_tracker_app/firebase_options.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
-import 'package:health_tracker_app/presentation/pages/home_page.dart';
 import 'package:health_tracker_app/presentation/pages/login_page.dart';
+import 'package:health_tracker_app/presentation/pages/main_shell_page.dart';
 import 'package:health_tracker_app/presentation/pages/splash_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         home: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
             if (state is AuthAuthenticated) {
-              return const HomePage();
+              return const MainShellPage(); // Đi đến trang "Vỏ"
             }
             if (state is AuthUnauthenticated) {
               return const LoginPage();
