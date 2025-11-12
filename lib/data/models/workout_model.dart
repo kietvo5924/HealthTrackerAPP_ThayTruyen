@@ -9,6 +9,7 @@ class WorkoutModel extends Workout {
     required super.startedAt,
     super.distanceInKm,
     super.routePolyline,
+    super.userFullName,
   });
 
   factory WorkoutModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,7 @@ class WorkoutModel extends Workout {
       startedAt: DateTime.parse(json['startedAt']), // API trả về ISO 8601
       distanceInKm: json['distanceInKm']?.toDouble(),
       routePolyline: json['routePolyline'],
+      userFullName: json['userFullName'],
     );
   }
 

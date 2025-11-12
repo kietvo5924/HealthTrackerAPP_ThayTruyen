@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 
@@ -9,12 +10,16 @@ part 'tracking_state.dart';
 
 class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
   final Location _location;
+  final GetHealthDataUseCase _getHealthDataUseCase;
   StreamSubscription<LocationData>? _locationSubscription;
   Timer? _timer; // Bây giờ chúng ta sẽ dùng biến này
 
-  TrackingBloc({required Location location})
-    : _location = location,
-      super(const TrackingState()) {
+  TrackingBloc({
+    required Location location,
+    required GetHealthDataUseCase getHealthDataUseCase,
+  }) : _location = location,
+       _getHealthDataUseCase = getHealthDataUseCase,
+       super(const TrackingState()) {
     on<TrackingStarted>(_onTrackingStarted);
     on<TrackingResumed>(_onTrackingResumed);
     on<TrackingPaused>(_onTrackingPaused);
@@ -68,12 +73,25 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
         }
       }
 
-      // 3. Lấy vị trí đầu tiên
+      // 3. Lấy cân nặng (MỚI)
+      double weight = state.currentWeightKg;
+      final healthDataResult = await _getHealthDataUseCase(DateTime.now());
+      healthDataResult.fold(
+        (l) => null, // Bỏ qua nếu lỗi, dùng cân nặng mặc định
+        (healthData) {
+          if (healthData.weight != null && healthData.weight! > 0) {
+            weight = healthData.weight!;
+          }
+        },
+      );
+
+      // 4. Lấy vị trí đầu tiên
       final LocationData initialLocation = await _location.getLocation();
       emit(
         state.copyWith(
           status: TrackingStatus.paused, // Sẵn sàng, đang tạm dừng
           currentLocation: initialLocation,
+          currentWeightKg: weight,
         ),
       );
     } catch (e) {
@@ -143,6 +161,31 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
   void _onTimerTicked(_TrackingTimerTicked event, Emitter<TrackingState> emit) {
     if (emit.isDone) return;
 
-    emit(state.copyWith(durationInSeconds: state.durationInSeconds + 1));
+    // Tính Calo
+    final double caloriesPerSecond = _calculateCaloriesPerSecond();
+    final double newTotalCalories = state.caloriesBurned + caloriesPerSecond;
+
+    emit(
+      state.copyWith(
+        durationInSeconds: state.durationInSeconds + 1,
+        caloriesBurned: newTotalCalories,
+      ),
+    );
+  }
+
+  // Tính Calo/Giây dùng công thức MET
+  double _calculateCaloriesPerSecond() {
+    // 1. Lấy MET value (ước lượng)
+    const double metValue = 9.8; // MET cho Chạy bộ
+
+    // 2. Lấy cân nặng
+    final double weight = state.currentWeightKg;
+    if (weight <= 0) return 0;
+
+    // 3. Công thức: (MET * 3.5 * Cân nặng (kg)) / 200 = Calo/Phút
+    final double caloriesPerMinute = (metValue * 3.5 * weight) / 200.0;
+
+    // 4. Trả về Calo/Giây
+    return caloriesPerMinute / 60.0;
   }
 }

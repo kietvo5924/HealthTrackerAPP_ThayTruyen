@@ -15,4 +15,6 @@ abstract class WorkoutRepository {
     double? distanceInKm,
     String? routePolyline,
   });
+
+  Future<Either<Failure, List<Workout>>> getCommunityFeed();
 }

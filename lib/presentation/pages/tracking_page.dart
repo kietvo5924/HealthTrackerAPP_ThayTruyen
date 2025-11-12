@@ -7,7 +7,8 @@ import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/tracking/tracking_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:health_tracker_app/core/utils/string_extensions.dart'; // Import file extension
+import 'package:health_tracker_app/core/utils/string_extensions.dart';
+import 'package:polyline_codec/polyline_codec.dart'; // Import file extension
 
 class TrackingPage extends StatefulWidget {
   const TrackingPage({super.key});
@@ -46,12 +47,17 @@ class _TrackingPageState extends State<TrackingPage> {
     final workoutBloc = context.read<WorkoutBloc>();
     final distance = _calculateDistance(trackingState.routePoints);
     final duration = trackingState.durationInSeconds;
+    final double calories = trackingState.caloriesBurned;
 
-    // --- SỬA LỖI Ở ĐÂY (logic tính phút) ---
-    // Làm tròn LÊN (ceil) thay vì làm tròn (round)
-    // 30 giây -> 1 phút (thay vì 0)
+    // 1. Mã hóa List<LatLng> (của latlong2) thành List<List<double>>
+    final List<List<double>> pointsToEncode = trackingState.routePoints
+        .map((latlng) => [latlng.latitude, latlng.longitude])
+        .toList();
+
+    // 2. Mã hóa thành chuỗi Polyline
+    final String routePolyline = PolylineCodec.encode(pointsToEncode);
+
     final int durationInMinutes = (duration / 60).ceil();
-    // --- KẾT THÚC SỬA LỖI ---
 
     showDialog(
       context: context,
@@ -67,6 +73,7 @@ class _TrackingPageState extends State<TrackingPage> {
                 children: [
                   Text('Thời gian: ${_formatDuration(duration)}'),
                   Text('Quãng đường: ${distance.toStringAsFixed(2)} km'),
+                  Text('Calo: ${calories.toStringAsFixed(0)} kcal'),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<WorkoutType>(
                     value: _selectedType,
@@ -110,9 +117,10 @@ class _TrackingPageState extends State<TrackingPage> {
                                 // Dùng biến đã tính
                                 durationInMinutes: durationInMinutes,
                                 startedAt: DateTime.now().toUtc(),
-                                caloriesBurned: null, // (Có thể tính sau)
+                                caloriesBurned: calories,
                                 distanceInKm: distance,
-                                routePolyline: null, // (Sẽ thêm polyline sau)
+                                routePolyline:
+                                    routePolyline, // (Sẽ thêm polyline sau)
                               );
                               workoutBloc.add(WorkoutAdded(params));
                               Navigator.of(dialogContext).pop(); // Đóng dialog
@@ -282,6 +290,18 @@ class _TrackingPageState extends State<TrackingPage> {
                                   style: Theme.of(
                                     context,
                                   ).textTheme.headlineSmall,
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Text(
+                                  'Calo',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                                Text(
+                                  state.caloriesBurned.toStringAsFixed(0),
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
                               ],
                             ),

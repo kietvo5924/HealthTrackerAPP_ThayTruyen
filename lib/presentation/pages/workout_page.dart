@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
+import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:intl/intl.dart';
 
 import 'package:health_tracker_app/presentation/pages/tracking_page.dart';
@@ -174,6 +175,13 @@ class _WorkoutListTile extends StatelessWidget {
               ),
           ],
         ),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => WorkoutDetailPage(workout: workout),
+            ),
+          );
+        },
       ),
     );
   }

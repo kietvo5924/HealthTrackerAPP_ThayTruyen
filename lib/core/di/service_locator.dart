@@ -9,63 +9,63 @@ import 'package:health_tracker_app/data/datasources/remote/auth_remote_data_sour
 import 'package:health_tracker_app/data/datasources/remote/health_data_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/notification_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/user_remote_data_source.dart';
+import 'package:health_tracker_app/data/datasources/remote/workout_remote_data_source.dart';
 import 'package:health_tracker_app/data/repositories/auth_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/health_data_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/notification_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/user_repository_impl.dart';
+import 'package:health_tracker_app/data/repositories/workout_repository_impl.dart';
 import 'package:health_tracker_app/domain/repositories/auth_repository.dart';
 import 'package:health_tracker_app/domain/repositories/health_data_repository.dart';
 import 'package:health_tracker_app/domain/repositories/notification_repository.dart';
 import 'package:health_tracker_app/domain/repositories/user_repository.dart';
+import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
 import 'package:health_tracker_app/domain/usecases/get_auth_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_range_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_user_profile_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/log_health_data_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/login_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/logout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/save_fcm_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/signup_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_profile_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/login/login_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/signup/signup_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/statistics/statistics_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-// --- THÊM IMPORT MỚI ---
-import 'package:location/location.dart';
 import 'package:health_tracker_app/presentation/bloc/tracking/tracking_bloc.dart';
-import 'package:health_tracker_app/data/datasources/remote/workout_remote_data_source.dart';
-import 'package:health_tracker_app/data/repositories/workout_repository_impl.dart';
-import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
-import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
-import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
-// --- KẾT THÚC THÊM MỚI ---
+import 'package:location/location.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.dart';
+
+import 'package:health_tracker_app/data/datasources/remote/nutrition_remote_data_source.dart';
+import 'package:health_tracker_app/data/repositories/nutrition_repository_impl.dart';
+import 'package:health_tracker_app/domain/repositories/nutrition_repository.dart';
+import 'package:health_tracker_app/domain/usecases/search_food_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_meals_for_date_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/add_food_to_meal_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/delete_meal_item_usecase.dart';
+import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
 
 final sl = GetIt.instance; // sl = Service Locator
 
 Future<void> init() async {
   // ### Core & External ###
-  // 1. SharedPreferences
+  sl.registerSingleton(SharedPreferences.getInstance());
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerSingleton(sharedPreferences);
-
-  // 2. Dio
   sl.registerSingleton(Dio());
   sl.registerSingleton(DioClient(sl(), sl()));
-
-  // 3. Firebase
   sl.registerSingleton(FirebaseMessaging.instance);
   sl.registerSingleton(FlutterLocalNotificationsPlugin());
-
-  // --- THÊM MỚI ---
-  // 4. Location
   sl.registerSingleton(Location());
-  // --- KẾT THÚC THÊM MỚI ---
 
   // ### DataSources ###
   sl.registerLazySingleton<AuthRemoteDataSource>(
@@ -87,6 +87,12 @@ Future<void> init() async {
     () => WorkoutRemoteDataSourceImpl(sl()),
   );
 
+  // --- THÊM MỚI (Nutrition) ---
+  sl.registerLazySingleton<NutritionRemoteDataSource>(
+    () => NutritionRemoteDataSourceImpl(sl()),
+  );
+  // --- KẾT THÚC THÊM MỚI ---
+
   // ### Repositories ###
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(remoteDataSource: sl(), localDataSource: sl()),
@@ -103,6 +109,12 @@ Future<void> init() async {
   sl.registerLazySingleton<WorkoutRepository>(
     () => WorkoutRepositoryImpl(remoteDataSource: sl()),
   );
+
+  // --- THÊM MỚI (Nutrition) ---
+  sl.registerLazySingleton<NutritionRepository>(
+    () => NutritionRepositoryImpl(remoteDataSource: sl()),
+  );
+  // --- KẾT THÚC THÊM MỚI ---
 
   // ### UseCases ###
   sl.registerLazySingleton(() => LoginUseCase(sl()));
@@ -121,6 +133,14 @@ Future<void> init() async {
 
   sl.registerLazySingleton(() => GetMyWorkoutsUseCase(sl()));
   sl.registerLazySingleton(() => LogWorkoutUseCase(sl()));
+  sl.registerLazySingleton(() => GetCommunityFeedUseCase(sl()));
+
+  // --- THÊM MỚI (Nutrition) ---
+  sl.registerLazySingleton(() => SearchFoodUseCase(sl()));
+  sl.registerLazySingleton(() => GetMealsForDateUseCase(sl()));
+  sl.registerLazySingleton(() => AddFoodToMealUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteMealItemUseCase(sl()));
+  // --- KẾT THÚC THÊM MỚI ---
 
   // ### BLoCs ###
   sl.registerSingleton<AuthBloc>(
@@ -150,8 +170,21 @@ Future<void> init() async {
   sl.registerFactory<WorkoutBloc>(
     () => WorkoutBloc(getMyWorkoutsUseCase: sl(), logWorkoutUseCase: sl()),
   );
+  sl.registerFactory<TrackingBloc>(
+    () => TrackingBloc(location: sl(), getHealthDataUseCase: sl()),
+  );
+  sl.registerFactory<FeedBloc>(() => FeedBloc(getCommunityFeedUseCase: sl()));
 
-  sl.registerFactory<TrackingBloc>(() => TrackingBloc(location: sl()));
+  // --- THÊM MỚI (Nutrition) ---
+  sl.registerFactory<NutritionBloc>(
+    () => NutritionBloc(
+      getMealsForDateUseCase: sl(),
+      searchFoodUseCase: sl(),
+      addFoodToMealUseCase: sl(),
+      deleteMealItemUseCase: sl(),
+    ),
+  );
+  // --- KẾT THÚC THÊM MỚI ---
 
   // ### Services ###
   sl.registerLazySingleton(() => NotificationService(sl(), sl()));

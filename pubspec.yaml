@@ -66,6 +66,10 @@ dependencies:
   location: ^6.0.2
   latlong2: ^0.9.1
 
+  # Mã hóa/Giải mã toạ độ
+  polyline_codec: ^0.1.6
+  bloc_concurrency: ^0.2.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

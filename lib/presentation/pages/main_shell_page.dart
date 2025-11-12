@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:health_tracker_app/presentation/pages/home_page.dart';
+import 'package:health_tracker_app/presentation/pages/nutrition_page.dart';
 import 'package:health_tracker_app/presentation/pages/profile_page.dart';
 import 'package:health_tracker_app/presentation/pages/statistics_page.dart';
 import 'package:health_tracker_app/presentation/pages/workout_page.dart';
@@ -18,6 +19,7 @@ class _MainShellPageState extends State<MainShellPage> {
   final List<Widget> _pages = const [
     HomePage(),
     StatisticsPage(),
+    NutritionPage(),
     WorkoutPage(),
     ProfilePage(),
   ];
@@ -53,6 +55,11 @@ class _MainShellPageState extends State<MainShellPage> {
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),
             label: 'Thống kê',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.restaurant_menu_outlined), // Đổi Icon
+            activeIcon: Icon(Icons.restaurant_menu),
+            label: 'Dinh dưỡng', // Đổi Label
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center_outlined),

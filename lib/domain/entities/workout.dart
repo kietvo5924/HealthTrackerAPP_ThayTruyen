@@ -12,6 +12,7 @@ class Workout extends Equatable {
   final DateTime startedAt;
   final double? distanceInKm;
   final String? routePolyline;
+  final String? userFullName;
 
   const Workout({
     required this.id,
@@ -21,6 +22,7 @@ class Workout extends Equatable {
     required this.startedAt,
     this.distanceInKm,
     this.routePolyline,
+    this.userFullName,
   });
 
   @override
@@ -32,5 +34,6 @@ class Workout extends Equatable {
     startedAt,
     distanceInKm,
     routePolyline,
+    userFullName,
   ];
 }

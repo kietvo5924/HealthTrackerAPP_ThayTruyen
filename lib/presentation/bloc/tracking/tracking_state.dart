@@ -8,6 +8,8 @@ class TrackingState extends Equatable {
   final List<LatLng> routePoints; // Các điểm toạ độ để vẽ đường
   final LocationData? currentLocation; // Vị trí hiện tại
   final String? errorMessage;
+  final double currentWeightKg; // Cân nặng của user
+  final double caloriesBurned; // Calo đã đốt
 
   const TrackingState({
     this.status = TrackingStatus.initial,
@@ -15,6 +17,8 @@ class TrackingState extends Equatable {
     this.routePoints = const [],
     this.currentLocation,
     this.errorMessage,
+    this.currentWeightKg = 60.0, // Mặc định 60kg
+    this.caloriesBurned = 0.0,
   });
 
   TrackingState copyWith({
@@ -23,6 +27,8 @@ class TrackingState extends Equatable {
     List<LatLng>? routePoints,
     LocationData? currentLocation,
     String? errorMessage,
+    double? currentWeightKg,
+    double? caloriesBurned,
   }) {
     return TrackingState(
       status: status ?? this.status,
@@ -30,6 +36,8 @@ class TrackingState extends Equatable {
       routePoints: routePoints ?? this.routePoints,
       currentLocation: currentLocation ?? this.currentLocation,
       errorMessage: errorMessage ?? this.errorMessage,
+      currentWeightKg: currentWeightKg ?? this.currentWeightKg,
+      caloriesBurned: caloriesBurned ?? this.caloriesBurned,
     );
   }
 
@@ -40,5 +48,7 @@ class TrackingState extends Equatable {
     routePoints,
     currentLocation,
     errorMessage,
+    currentWeightKg,
+    caloriesBurned,
   ];
 }
