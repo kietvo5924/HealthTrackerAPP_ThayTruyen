@@ -42,3 +42,12 @@ class NutritionDeleteFood extends NutritionEvent {
   @override
   List<Object> get props => [mealItemId];
 }
+
+// Event khi người dùng tạo một món ăn (Food) mới
+class NutritionCreateFood extends NutritionEvent {
+  final CreateFoodParams params;
+  const NutritionCreateFood(this.params);
+
+  @override
+  List<Object> get props => [params];
+}

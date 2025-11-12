@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:health_tracker_app/data/models/add_meal_item_request_model.dart';
+import 'package:health_tracker_app/data/models/create_food_request_model.dart';
 import 'package:health_tracker_app/data/models/food_model.dart';
 import 'package:health_tracker_app/data/models/meal_model.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +17,9 @@ abstract class NutritionRemoteDataSource {
 
   /// API: DELETE /api/nutrition/meals/item/{itemId}
   Future<void> deleteMealItem(int mealItemId);
+
+  /// API: POST /api/nutrition/food
+  Future<FoodModel> createFood(CreateFoodRequestModel request);
 }
 
 class NutritionRemoteDataSourceImpl implements NutritionRemoteDataSource {
@@ -96,6 +100,27 @@ class NutritionRemoteDataSourceImpl implements NutritionRemoteDataSource {
         throw DioException(
           requestOptions: response.requestOptions,
           message: 'Xóa món ăn thất bại',
+        );
+      }
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<FoodModel> createFood(CreateFoodRequestModel request) async {
+    try {
+      final response = await dio.post(
+        '/nutrition/food', // Gọi API POST /api/nutrition/food
+        data: request.toJson(),
+      );
+      if (response.statusCode == 201) {
+        // Backend trả về 201 Created
+        return FoodModel.fromJson(response.data);
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Tạo món ăn thất bại',
         );
       }
     } on DioException {

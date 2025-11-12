@@ -21,6 +21,7 @@ import 'package:health_tracker_app/domain/repositories/notification_repository.d
 import 'package:health_tracker_app/domain/repositories/user_repository.dart';
 import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
 import 'package:health_tracker_app/domain/usecases/get_auth_token_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_range_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
@@ -43,22 +44,21 @@ import 'package:health_tracker_app/presentation/bloc/tracking/tracking_bloc.dart
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.dart';
 
 import 'package:health_tracker_app/data/datasources/remote/nutrition_remote_data_source.dart';
 import 'package:health_tracker_app/data/repositories/nutrition_repository_impl.dart';
 import 'package:health_tracker_app/domain/repositories/nutrition_repository.dart';
-import 'package:health_tracker_app/domain/usecases/search_food_usecase.dart';
-import 'package:health_tracker_app/domain/usecases/get_meals_for_date_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/add_food_to_meal_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/create_food_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/delete_meal_item_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_meals_for_date_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/search_food_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
 
 final sl = GetIt.instance; // sl = Service Locator
 
 Future<void> init() async {
   // ### Core & External ###
-  sl.registerSingleton(SharedPreferences.getInstance());
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerSingleton(sharedPreferences);
   sl.registerSingleton(Dio());
@@ -140,6 +140,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetMealsForDateUseCase(sl()));
   sl.registerLazySingleton(() => AddFoodToMealUseCase(sl()));
   sl.registerLazySingleton(() => DeleteMealItemUseCase(sl()));
+  sl.registerLazySingleton(() => CreateFoodUseCase(sl()));
   // --- KẾT THÚC THÊM MỚI ---
 
   // ### BLoCs ###
@@ -175,16 +176,15 @@ Future<void> init() async {
   );
   sl.registerFactory<FeedBloc>(() => FeedBloc(getCommunityFeedUseCase: sl()));
 
-  // --- THÊM MỚI (Nutrition) ---
   sl.registerFactory<NutritionBloc>(
     () => NutritionBloc(
       getMealsForDateUseCase: sl(),
       searchFoodUseCase: sl(),
       addFoodToMealUseCase: sl(),
       deleteMealItemUseCase: sl(),
+      createFoodUseCase: sl(), // Thêm
     ),
   );
-  // --- KẾT THÚC THÊM MỚI ---
 
   // ### Services ###
   sl.registerLazySingleton(() => NotificationService(sl(), sl()));

@@ -5,6 +5,10 @@ import 'package:health_tracker_app/domain/entities/meal.dart';
 import 'package:health_tracker_app/domain/usecases/add_food_to_meal_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
 
+// --- THÊM IMPORT MỚI ---
+import 'package:health_tracker_app/presentation/pages/create_food_page.dart';
+// --- KẾT THÚC THÊM MỚI ---
+
 class SearchFoodPage extends StatefulWidget {
   final MealType mealType;
   final DateTime selectedDate;
@@ -141,6 +145,22 @@ class _SearchFoodPageState extends State<SearchFoodPage> {
             },
           );
         },
+      ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                // Chuyền BLoC (đã có) sang trang mới
+                value: context.read<NutritionBloc>(),
+                child: const CreateFoodPage(),
+              ),
+            ),
+          );
+        },
+        label: const Text('Tạo món ăn'),
+        icon: const Icon(Icons.add),
       ),
     );
   }

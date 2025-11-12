@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
+import 'package:health_tracker_app/presentation/pages/feed_page.dart';
 import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:intl/intl.dart';
 
@@ -20,91 +21,117 @@ class WorkoutPage extends StatelessWidget {
     return BlocProvider(
       create: (context) =>
           sl<WorkoutBloc>()..add(WorkoutsFetched()), // Tải khi mở
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Bài tập của tôi'),
-          actions: [
-            // Nút Refresh
-            BlocBuilder<WorkoutBloc, WorkoutState>(
-              builder: (context, state) {
-                // Chỉ hiển thị loading nếu không phải là đang submit
-                if (state.status == WorkoutStatus.loading &&
-                    !state.isSubmitting) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+      child: DefaultTabController(
+        length: 2, // 2 tab
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Bài tập'),
+            actions: [
+              // Nút Refresh
+              BlocBuilder<WorkoutBloc, WorkoutState>(
+                builder: (context, state) {
+                  // (Code nút Refresh đã có)
+                  if (state.status == WorkoutStatus.loading &&
+                      !state.isSubmitting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  }
+                  return IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () {
+                      context.read<WorkoutBloc>().add(WorkoutsFetched());
+                    },
+                  );
+                },
+              ),
+            ],
+            // Thêm TabBar
+            bottom: const TabBar(
+              tabs: [
+                Tab(text: 'Bài tập của tôi'),
+                Tab(text: 'Cộng đồng'),
+              ],
+            ),
+          ),
+
+          // Thay body bằng TabBarView
+          body: TabBarView(
+            children: [
+              // Tab 1: Bài tập của tôi
+              _MyWorkoutsView(),
+
+              // Tab 2: Cộng đồng
+              FeedPage(), // Sử dụng lại FeedPage ở đây
+            ],
+          ),
+
+          floatingActionButton: BlocBuilder<WorkoutBloc, WorkoutState>(
+            builder: (context, state) {
+              return FloatingActionButton(
+                heroTag: 'add_workout_button',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: BlocProvider.of<WorkoutBloc>(context),
+                        child: const TrackingPage(),
+                      ),
                     ),
                   );
-                }
-                return IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    context.read<WorkoutBloc>().add(WorkoutsFetched());
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-        body: BlocBuilder<WorkoutBloc, WorkoutState>(
-          builder: (context, state) {
-            // Trạng thái Lỗi
-            if (state.status == WorkoutStatus.failure) {
-              return Center(child: Text('Lỗi: ${state.errorMessage}'));
-            }
-
-            // Trạng thái Tải (ngoại trừ lúc đang submit)
-            if ((state.status == WorkoutStatus.loading ||
-                    state.status == WorkoutStatus.initial) &&
-                !state.isSubmitting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            // Trạng thái Rỗng (Thành công nhưng không có dữ liệu)
-            if (state.status == WorkoutStatus.success &&
-                state.workouts.isEmpty) {
-              return const Center(
-                child: Text(
-                  'Bạn chưa ghi bài tập nào.\nNhấn dấu + để bắt đầu!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
+                },
+                child: const Icon(Icons.add),
               );
-            }
-
-            // Trạng thái Thành công (có dữ liệu)
-            return ListView.builder(
-              itemCount: state.workouts.length,
-              itemBuilder: (context, index) {
-                final workout = state.workouts[index];
-                return _WorkoutListTile(workout: workout);
-              },
-            );
-          },
-        ),
-        floatingActionButton: BlocBuilder<WorkoutBloc, WorkoutState>(
-          builder: (context, state) {
-            return FloatingActionButton(
-              // --- SỬA LỖI 2 (Hero) ---
-              heroTag: 'add_workout_button', // Đặt 1 tag duy nhất
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: BlocProvider.of<WorkoutBloc>(context),
-                      child: const TrackingPage(),
-                    ),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
-            );
-          },
+            },
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _MyWorkoutsView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<WorkoutBloc, WorkoutState>(
+      builder: (context, state) {
+        // Trạng thái Lỗi
+        if (state.status == WorkoutStatus.failure) {
+          return Center(child: Text('Lỗi: ${state.errorMessage}'));
+        }
+
+        // Trạng thái Tải (ngoại trừ lúc đang submit)
+        if ((state.status == WorkoutStatus.loading ||
+                state.status == WorkoutStatus.initial) &&
+            !state.isSubmitting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Trạng thái Rỗng (Thành công nhưng không có dữ liệu)
+        if (state.status == WorkoutStatus.success && state.workouts.isEmpty) {
+          return const Center(
+            child: Text(
+              'Bạn chưa ghi bài tập nào.\nNhấn dấu + để bắt đầu!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          );
+        }
+
+        // Trạng thái Thành công (có dữ liệu)
+        return ListView.builder(
+          itemCount: state.workouts.length,
+          itemBuilder: (context, index) {
+            final workout = state.workouts[index];
+            return _WorkoutListTile(workout: workout);
+          },
+        );
+      },
     );
   }
 }

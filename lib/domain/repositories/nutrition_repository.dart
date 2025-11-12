@@ -21,4 +21,14 @@ abstract class NutritionRepository {
 
   /// API: DELETE /api/nutrition/meals/item/{itemId}
   Future<Either<Failure, void>> deleteMealItem(int mealItemId);
+
+  /// API: POST /api/nutrition/food
+  Future<Either<Failure, Food>> createFood({
+    required String name,
+    required String unit,
+    required double calories,
+    required double proteinGrams,
+    required double carbsGrams,
+    required double fatGrams,
+  });
 }

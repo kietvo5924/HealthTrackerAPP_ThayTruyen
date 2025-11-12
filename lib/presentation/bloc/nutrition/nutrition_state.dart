@@ -4,6 +4,8 @@ enum NutritionStatus { initial, loading, success, failure }
 
 enum FoodSearchStatus { initial, loading, success, failure }
 
+enum FoodCreateStatus { initial, loading, success, failure }
+
 class NutritionState extends Equatable {
   // Trạng thái chung (tải bữa ăn, thêm/xóa)
   final NutritionStatus status;
@@ -16,6 +18,9 @@ class NutritionState extends Equatable {
   final List<Food> searchResults;
   final String? searchErrorMessage;
 
+  final FoodCreateStatus createFoodStatus;
+  final String? createFoodErrorMessage;
+
   const NutritionState({
     this.status = NutritionStatus.initial,
     this.meals = const [],
@@ -24,6 +29,8 @@ class NutritionState extends Equatable {
     this.searchStatus = FoodSearchStatus.initial,
     this.searchResults = const [],
     this.searchErrorMessage,
+    this.createFoodStatus = FoodCreateStatus.initial,
+    this.createFoodErrorMessage,
   });
 
   // Constructor khởi tạo
@@ -41,6 +48,8 @@ class NutritionState extends Equatable {
     List<Food>? searchResults,
     String? searchErrorMessage,
     bool clearError = false,
+    FoodCreateStatus? createFoodStatus,
+    String? createFoodErrorMessage,
   }) {
     return NutritionState(
       status: status ?? this.status,
@@ -52,6 +61,10 @@ class NutritionState extends Equatable {
       searchErrorMessage: clearError
           ? null
           : searchErrorMessage ?? this.searchErrorMessage,
+      createFoodStatus: createFoodStatus ?? this.createFoodStatus,
+      createFoodErrorMessage: clearError
+          ? null
+          : createFoodErrorMessage ?? this.createFoodErrorMessage,
     );
   }
 
@@ -64,5 +77,7 @@ class NutritionState extends Equatable {
     searchStatus,
     searchResults,
     searchErrorMessage,
+    createFoodStatus,
+    createFoodErrorMessage,
   ];
 }

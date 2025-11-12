@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/data/datasources/remote/nutrition_remote_data_source.dart';
 import 'package:health_tracker_app/data/models/add_meal_item_request_model.dart';
+import 'package:health_tracker_app/data/models/create_food_request_model.dart';
 import 'package:health_tracker_app/domain/entities/food.dart';
 import 'package:health_tracker_app/domain/entities/meal.dart';
 import 'package:health_tracker_app/domain/repositories/nutrition_repository.dart';
@@ -71,6 +72,36 @@ class NutritionRepositoryImpl implements NutritionRepository {
     try {
       await remoteDataSource.deleteMealItem(mealItemId);
       return const Right(null); // Trả về Right(null) khi thành công
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    } catch (e) {
+      return Left(GenericFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Food>> createFood({
+    required String name,
+    required String unit,
+    required double calories,
+    required double proteinGrams,
+    required double carbsGrams,
+    required double fatGrams,
+  }) async {
+    try {
+      // 1. Chuyển đổi dữ liệu sang Request DTO
+      final requestModel = CreateFoodRequestModel(
+        name: name,
+        unit: unit,
+        calories: calories,
+        proteinGrams: proteinGrams,
+        carbsGrams: carbsGrams,
+        fatGrams: fatGrams,
+      );
+
+      // 2. Gọi API
+      final newFood = await remoteDataSource.createFood(requestModel);
+      return Right(newFood);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));
     } catch (e) {

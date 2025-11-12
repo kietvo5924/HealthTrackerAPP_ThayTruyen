@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:health_tracker_app/domain/entities/food.dart';
 import 'package:health_tracker_app/domain/entities/meal.dart';
 import 'package:health_tracker_app/domain/usecases/add_food_to_meal_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/create_food_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/delete_meal_item_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_meals_for_date_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/search_food_usecase.dart';
@@ -16,16 +17,19 @@ class NutritionBloc extends Bloc<NutritionEvent, NutritionState> {
   final SearchFoodUseCase _searchFoodUseCase;
   final AddFoodToMealUseCase _addFoodToMealUseCase;
   final DeleteMealItemUseCase _deleteMealItemUseCase;
+  final CreateFoodUseCase _createFoodUseCase;
 
   NutritionBloc({
     required GetMealsForDateUseCase getMealsForDateUseCase,
     required SearchFoodUseCase searchFoodUseCase,
     required AddFoodToMealUseCase addFoodToMealUseCase,
     required DeleteMealItemUseCase deleteMealItemUseCase,
+    required CreateFoodUseCase createFoodUseCase,
   }) : _getMealsForDateUseCase = getMealsForDateUseCase,
        _searchFoodUseCase = searchFoodUseCase,
        _addFoodToMealUseCase = addFoodToMealUseCase,
        _deleteMealItemUseCase = deleteMealItemUseCase,
+       _createFoodUseCase = createFoodUseCase,
        super(NutritionState.initial()) {
     on<NutritionGetMeals>(_onGetMeals);
     on<NutritionSearchFood>(
@@ -35,6 +39,7 @@ class NutritionBloc extends Bloc<NutritionEvent, NutritionState> {
     );
     on<NutritionAddFood>(_onAddFood);
     on<NutritionDeleteFood>(_onDeleteFood);
+    on<NutritionCreateFood>(_onCreateFood);
   }
 
   Future<void> _onGetMeals(
@@ -145,6 +150,34 @@ class NutritionBloc extends Bloc<NutritionEvent, NutritionState> {
       (success) {
         // Xóa thành công, tải lại toàn bộ
         add(NutritionGetMeals(state.selectedDate));
+      },
+    );
+  }
+
+  Future<void> _onCreateFood(
+    NutritionCreateFood event,
+    Emitter<NutritionState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        createFoodStatus: FoodCreateStatus.loading,
+        clearError: true,
+      ),
+    );
+
+    final result = await _createFoodUseCase(event.params);
+
+    result.fold(
+      (failure) {
+        emit(
+          state.copyWith(
+            createFoodStatus: FoodCreateStatus.failure,
+            createFoodErrorMessage: failure.message,
+          ),
+        );
+      },
+      (newFood) {
+        emit(state.copyWith(createFoodStatus: FoodCreateStatus.success));
       },
     );
   }
