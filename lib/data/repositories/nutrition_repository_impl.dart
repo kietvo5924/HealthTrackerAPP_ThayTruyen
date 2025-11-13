@@ -6,6 +6,7 @@ import 'package:health_tracker_app/data/models/add_meal_item_request_model.dart'
 import 'package:health_tracker_app/data/models/create_food_request_model.dart';
 import 'package:health_tracker_app/domain/entities/food.dart';
 import 'package:health_tracker_app/domain/entities/meal.dart';
+import 'package:health_tracker_app/domain/entities/nutrition_summary.dart';
 import 'package:health_tracker_app/domain/repositories/nutrition_repository.dart';
 import 'package:intl/intl.dart';
 
@@ -102,6 +103,26 @@ class NutritionRepositoryImpl implements NutritionRepository {
       // 2. Gọi API
       final newFood = await remoteDataSource.createFood(requestModel);
       return Right(newFood);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    } catch (e) {
+      return Left(GenericFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<NutritionSummary>>> getNutritionSummary({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final start = DateFormat('yyyy-MM-dd').format(startDate);
+      final end = DateFormat('yyyy-MM-dd').format(endDate);
+      final summaryList = await remoteDataSource.getNutritionSummary(
+        start,
+        end,
+      );
+      return Right(summaryList);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));
     } catch (e) {

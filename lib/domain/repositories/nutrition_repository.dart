@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/domain/entities/food.dart';
 import 'package:health_tracker_app/domain/entities/meal.dart';
+import 'package:health_tracker_app/domain/entities/nutrition_summary.dart';
 
 // Hợp đồng cho tất cả các hoạt động liên quan đến Dinh dưỡng
 abstract class NutritionRepository {
@@ -30,5 +31,10 @@ abstract class NutritionRepository {
     required double proteinGrams,
     required double carbsGrams,
     required double fatGrams,
+  });
+
+  Future<Either<Failure, List<NutritionSummary>>> getNutritionSummary({
+    required DateTime startDate,
+    required DateTime endDate,
   });
 }

@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:health_tracker_app/core/usecase/usecase.dart';
+import 'package:health_tracker_app/data/models/notification_settings_request_model.dart';
 import 'package:health_tracker_app/domain/entities/user_profile.dart';
 import 'package:health_tracker_app/domain/usecases/get_user_profile_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/update_notification_settings_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_profile_usecase.dart';
 import 'package:health_tracker_app/data/models/user_profile_model.dart'; // Để dùng tạm
 
@@ -12,12 +14,16 @@ part 'profile_state.dart';
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final GetUserProfileUseCase _getUserProfileUseCase;
   final UpdateUserProfileUseCase _updateUserProfileUseCase;
+  final UpdateNotificationSettingsUseCase _updateNotificationSettingsUseCase;
 
   ProfileBloc({
     required GetUserProfileUseCase getUserProfileUseCase,
     required UpdateUserProfileUseCase updateUserProfileUseCase,
+    required UpdateNotificationSettingsUseCase
+    updateNotificationSettingsUseCase,
   }) : _getUserProfileUseCase = getUserProfileUseCase,
        _updateUserProfileUseCase = updateUserProfileUseCase,
+       _updateNotificationSettingsUseCase = updateNotificationSettingsUseCase,
        super(const ProfileState()) {
     on<ProfileFetched>(_onProfileFetched);
     on<ProfileFullNameChanged>(_onFullNameChanged);
@@ -27,6 +33,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileSubmitted>(_onProfileSubmitted);
     on<ProfileMedicalHistoryChanged>(_onMedicalHistoryChanged);
     on<ProfileAllergiesChanged>(_onAllergiesChanged);
+    on<ProfileNotificationSettingsChanged>(_onNotificationSettingsChanged);
   }
 
   Future<void> _onProfileFetched(
@@ -69,6 +76,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           phoneNumber: state.userProfile!.phoneNumber,
           dateOfBirth: state.userProfile!.dateOfBirth,
           address: state.userProfile!.address,
+          remindWater: state.userProfile!.remindWater,
+          remindSleep: state.userProfile!.remindSleep,
         ),
       ),
     );
@@ -89,6 +98,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           phoneNumber: event.phoneNumber, // Thay đổi
           dateOfBirth: state.userProfile!.dateOfBirth,
           address: state.userProfile!.address,
+          remindWater: state.userProfile!.remindWater,
+          remindSleep: state.userProfile!.remindSleep,
         ),
       ),
     );
@@ -109,6 +120,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           phoneNumber: state.userProfile!.phoneNumber,
           dateOfBirth: event.dateOfBirth, // Thay đổi
           address: state.userProfile!.address,
+          remindWater: state.userProfile!.remindWater,
+          remindSleep: state.userProfile!.remindSleep,
         ),
       ),
     );
@@ -129,6 +142,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           phoneNumber: state.userProfile!.phoneNumber,
           dateOfBirth: state.userProfile!.dateOfBirth,
           address: event.address, // Thay đổi
+          remindWater: state.userProfile!.remindWater,
+          remindSleep: state.userProfile!.remindSleep,
         ),
       ),
     );
@@ -181,6 +196,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           address: state.userProfile!.address,
           medicalHistory: event.medicalHistory, // Thay đổi
           allergies: state.userProfile!.allergies,
+          remindWater: state.userProfile!.remindWater,
+          remindSleep: state.userProfile!.remindSleep,
         ),
       ),
     );
@@ -203,8 +220,71 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           address: state.userProfile!.address,
           medicalHistory: state.userProfile!.medicalHistory,
           allergies: event.allergies, // Thay đổi
+          remindWater: state.userProfile!.remindWater,
+          remindSleep: state.userProfile!.remindSleep,
         ),
       ),
+    );
+  }
+
+  Future<void> _onNotificationSettingsChanged(
+    ProfileNotificationSettingsChanged event,
+    Emitter<ProfileState> emit,
+  ) async {
+    if (state.userProfile == null) return;
+
+    // 1. Cập nhật UI ngay lập tức (Lạc quan)
+    final optimisticProfile = UserProfileModel(
+      id: state.userProfile!.id,
+      email: state.userProfile!.email,
+      role: state.userProfile!.role,
+      fullName: state.userProfile!.fullName,
+      phoneNumber: state.userProfile!.phoneNumber,
+      dateOfBirth: state.userProfile!.dateOfBirth,
+      address: state.userProfile!.address,
+      medicalHistory: state.userProfile!.medicalHistory,
+      allergies: state.userProfile!.allergies,
+      // Cập nhật giá trị mới
+      remindWater: event.remindWater,
+      remindSleep: event.remindSleep,
+    );
+
+    emit(
+      state.copyWith(
+        userProfile: optimisticProfile,
+        status: ProfileStatus.updating,
+      ),
+    );
+
+    // 2. Gọi API
+    final result = await _updateNotificationSettingsUseCase(
+      NotificationSettingsRequestModel(
+        remindWater: event.remindWater,
+        remindSleep: event.remindSleep,
+      ),
+    );
+
+    // 3. Xử lý kết quả
+    result.fold(
+      (failure) {
+        // Nếu lỗi, quay về trạng thái cũ và báo lỗi
+        emit(
+          state.copyWith(
+            status: ProfileStatus.failure,
+            errorMessage: failure.message,
+            userProfile: state.userProfile, // Quay lại profile cũ
+          ),
+        );
+      },
+      (updatedProfile) {
+        // Nếu thành công, xác nhận state
+        emit(
+          state.copyWith(
+            status: ProfileStatus.success,
+            userProfile: updatedProfile,
+          ),
+        );
+      },
     );
   }
 }

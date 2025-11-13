@@ -1,17 +1,30 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/domain/entities/health_data.dart';
+import 'package:health_tracker_app/domain/entities/nutrition_summary.dart';
+import 'package:health_tracker_app/domain/entities/workout_summary.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_range_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_nutrition_summary_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_workout_summary_usecase.dart';
 
 part 'statistics_event.dart';
 part 'statistics_state.dart';
 
 class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
   final GetHealthDataRangeUseCase _getHealthDataRangeUseCase;
+  final GetNutritionSummaryUseCase _getNutritionSummaryUseCase;
+  final GetWorkoutSummaryUseCase _getWorkoutSummaryUseCase;
 
-  StatisticsBloc({required GetHealthDataRangeUseCase getHealthDataRangeUseCase})
-    : _getHealthDataRangeUseCase = getHealthDataRangeUseCase,
-      super(const StatisticsState(selectedDays: 7)) {
+  StatisticsBloc({
+    required GetHealthDataRangeUseCase getHealthDataRangeUseCase,
+    required GetNutritionSummaryUseCase getNutritionSummaryUseCase,
+    required GetWorkoutSummaryUseCase getWorkoutSummaryUseCase,
+  }) : _getHealthDataRangeUseCase = getHealthDataRangeUseCase,
+       _getNutritionSummaryUseCase = getNutritionSummaryUseCase,
+       _getWorkoutSummaryUseCase = getWorkoutSummaryUseCase,
+       super(const StatisticsState(selectedDays: 7)) {
     on<StatisticsFetched>(_onStatisticsFetched);
     on<StatisticsDaysChanged>(_onDaysChanged);
   }
@@ -20,37 +33,63 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     StatisticsFetched event,
     Emitter<StatisticsState> emit,
   ) async {
-    emit(state.copyWith(status: StatisticsStatus.loading));
+    emit(
+      state.copyWith(
+        status: StatisticsStatus.loading,
+        // Xóa dữ liệu cũ khi tải
+        healthDataList: [],
+        nutritionSummaryList: [],
+        workoutSummaryList: [],
+      ),
+    );
 
-    // Tính ngày bắt đầu
     final DateTime startDate = event.endDate.subtract(
       Duration(days: event.days - 1),
     );
-
-    final result = await _getHealthDataRangeUseCase(
-      HealthDataRangeParams(startDate: startDate, endDate: event.endDate),
+    final params = HealthDataRangeParams(
+      startDate: startDate,
+      endDate: event.endDate,
     );
 
-    result.fold(
-      (failure) {
-        emit(
-          state.copyWith(
-            status: StatisticsStatus.failure,
-            errorMessage: failure.message,
-            selectedDays: event.days,
-          ),
-        );
-      },
-      (dataList) {
-        emit(
-          state.copyWith(
-            status: StatisticsStatus.success,
-            healthDataList: dataList,
-            selectedDays: event.days,
-          ),
-        );
-      },
-    );
+    // === GỌI CẢ 3 API CÙNG LÚC ===
+    final results = await Future.wait([
+      _getHealthDataRangeUseCase(params),
+      _getNutritionSummaryUseCase(params),
+      _getWorkoutSummaryUseCase(params),
+    ]);
+
+    // === XỬ LÝ KẾT QUẢ ===
+    final healthDataResult = results[0] as Either<Failure, List<HealthData>>;
+    final nutritionResult =
+        results[1] as Either<Failure, List<NutritionSummary>>;
+    final workoutResult = results[2] as Either<Failure, List<WorkoutSummary>>;
+
+    // Xử lý lỗi (nếu bất kỳ API nào lỗi, báo lỗi chung)
+    String? errorMessage;
+    healthDataResult.fold((f) => errorMessage = f.message, (r) => null);
+    nutritionResult.fold((f) => errorMessage = f.message, (r) => null);
+    workoutResult.fold((f) => errorMessage = f.message, (r) => null);
+
+    if (errorMessage != null) {
+      emit(
+        state.copyWith(
+          status: StatisticsStatus.failure,
+          errorMessage: errorMessage,
+          selectedDays: event.days,
+        ),
+      );
+    } else {
+      // Nếu tất cả thành công
+      emit(
+        state.copyWith(
+          status: StatisticsStatus.success,
+          healthDataList: healthDataResult.getOrElse((_) => []),
+          nutritionSummaryList: nutritionResult.getOrElse((_) => []),
+          workoutSummaryList: workoutResult.getOrElse((_) => []),
+          selectedDays: event.days,
+        ),
+      );
+    }
   }
 
   Future<void> _onDaysChanged(

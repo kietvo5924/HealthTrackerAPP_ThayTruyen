@@ -139,6 +139,65 @@ class ProfileForm extends StatelessWidget {
           const SizedBox(height: 16),
           _DateOfBirthPicker(), // Widget chọn ngày
           const SizedBox(height: 16),
+
+          // Thêm một đường kẻ
+          const Divider(thickness: 1, height: 32),
+          Text(
+            'Cài đặt thông báo',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+
+          // Dùng BlocBuilder để lấy state mới nhất
+          BlocBuilder<ProfileBloc, ProfileState>(
+            // Chỉ build khi userProfile thay đổi
+            buildWhen: (p, c) => p.userProfile != c.userProfile,
+            builder: (context, state) {
+              // Đảm bảo profile không null
+              if (state.userProfile == null) {
+                return const SizedBox.shrink();
+              }
+
+              return Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text('Nhắc nhở uống nước'),
+                    subtitle: const Text(
+                      'Nhận thông báo lúc 12:00 trưa nếu chưa uống',
+                    ),
+                    value: state.userProfile!.remindWater,
+                    onChanged: (newValue) {
+                      // Gửi event đến BLoC
+                      context.read<ProfileBloc>().add(
+                        ProfileNotificationSettingsChanged(
+                          remindWater: newValue,
+                          remindSleep: state.userProfile!.remindSleep,
+                        ),
+                      );
+                    },
+                  ),
+                  SwitchListTile(
+                    title: const Text('Nhắc nhở đi ngủ'),
+                    subtitle: const Text('Nhận thông báo lúc 9:00 tối'),
+                    value: state.userProfile!.remindSleep,
+                    onChanged: (newValue) {
+                      // Gửi event đến BLoC
+                      context.read<ProfileBloc>().add(
+                        ProfileNotificationSettingsChanged(
+                          remindWater: state.userProfile!.remindWater,
+                          remindSleep: newValue,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          const Divider(thickness: 1, height: 32),
+
           TextFormField(
             initialValue: profile.medicalHistory,
             decoration: const InputDecoration(

@@ -3,6 +3,7 @@ import 'package:health_tracker_app/data/models/add_meal_item_request_model.dart'
 import 'package:health_tracker_app/data/models/create_food_request_model.dart';
 import 'package:health_tracker_app/data/models/food_model.dart';
 import 'package:health_tracker_app/data/models/meal_model.dart';
+import 'package:health_tracker_app/data/models/nutrition_summary_model.dart';
 import 'package:intl/intl.dart';
 
 abstract class NutritionRemoteDataSource {
@@ -20,6 +21,11 @@ abstract class NutritionRemoteDataSource {
 
   /// API: POST /api/nutrition/food
   Future<FoodModel> createFood(CreateFoodRequestModel request);
+
+  Future<List<NutritionSummaryModel>> getNutritionSummary(
+    String startDate,
+    String endDate,
+  );
 }
 
 class NutritionRemoteDataSourceImpl implements NutritionRemoteDataSource {
@@ -121,6 +127,31 @@ class NutritionRemoteDataSourceImpl implements NutritionRemoteDataSource {
         throw DioException(
           requestOptions: response.requestOptions,
           message: 'Tạo món ăn thất bại',
+        );
+      }
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<NutritionSummaryModel>> getNutritionSummary(
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await dio.get(
+        '/nutrition/summary',
+        queryParameters: {'startDate': startDate, 'endDate': endDate},
+      );
+      if (response.statusCode == 200) {
+        return (response.data as List)
+            .map((json) => NutritionSummaryModel.fromJson(json))
+            .toList();
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Lấy tóm tắt dinh dưỡng thất bại',
         );
       }
     } on DioException {

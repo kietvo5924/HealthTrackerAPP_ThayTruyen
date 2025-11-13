@@ -5,7 +5,9 @@ import 'package:health_tracker_app/data/datasources/remote/workout_remote_data_s
 import 'package:health_tracker_app/data/models/log_workout_request_model.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/domain/entities/workout_comment.dart';
+import 'package:health_tracker_app/domain/entities/workout_summary.dart';
 import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
+import 'package:intl/intl.dart';
 
 class WorkoutRepositoryImpl implements WorkoutRepository {
   final WorkoutRemoteDataSource remoteDataSource;
@@ -106,6 +108,23 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
         text: text,
       );
       return Right(newComment);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    } catch (e) {
+      return Left(GenericFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<WorkoutSummary>>> getWorkoutSummary({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final start = DateFormat('yyyy-MM-dd').format(startDate);
+      final end = DateFormat('yyyy-MM-dd').format(endDate);
+      final summaryList = await remoteDataSource.getWorkoutSummary(start, end);
+      return Right(summaryList);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));
     } catch (e) {

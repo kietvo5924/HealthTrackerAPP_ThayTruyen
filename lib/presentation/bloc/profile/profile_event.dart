@@ -45,3 +45,16 @@ class ProfileAllergiesChanged extends ProfileEvent {
   final String allergies;
   const ProfileAllergiesChanged(this.allergies);
 }
+
+class ProfileNotificationSettingsChanged extends ProfileEvent {
+  final bool remindWater;
+  final bool remindSleep;
+
+  const ProfileNotificationSettingsChanged({
+    required this.remindWater,
+    required this.remindSleep,
+  });
+
+  @override
+  List<Object> get props => [remindWater, remindSleep];
+}

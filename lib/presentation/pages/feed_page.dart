@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:health_tracker_app/presentation/widgets/workout_feed_tile.dart';
 
@@ -80,7 +81,11 @@ class FeedPage extends StatelessWidget {
                       // Mở trang chi tiết khi nhấn vào
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => WorkoutDetailPage(workout: workout),
+                          builder: (_) => BlocProvider.value(
+                            // Lấy WorkoutBloc từ context của MainShellPage
+                            value: context.read<WorkoutBloc>(),
+                            child: WorkoutDetailPage(workout: workout),
+                          ),
                         ),
                       );
                     },

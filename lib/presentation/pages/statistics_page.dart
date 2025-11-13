@@ -8,6 +8,14 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'dart:math'; // Import để dùng 'pi' cho việc xoay
 
+// === THÊM IMPORT CHO CÁC MODEL (ĐỂ SỬA LỖI) ===
+import 'package:health_tracker_app/data/models/nutrition_summary_model.dart';
+import 'package:health_tracker_app/data/models/workout_summary_model.dart';
+// === KẾT THÚC ===
+
+import 'package:health_tracker_app/domain/entities/nutrition_summary.dart';
+import 'package:health_tracker_app/domain/entities/workout_summary.dart';
+
 class StatisticsPage extends StatelessWidget {
   const StatisticsPage({super.key});
 
@@ -18,7 +26,6 @@ class StatisticsPage extends StatelessWidget {
           sl<StatisticsBloc>()..add(StatisticsFetched(endDate: DateTime.now())),
       child: Scaffold(
         appBar: AppBar(
-          // --- SỬA TIÊU ĐỀ ĐỘNG ---
           title: BlocBuilder<StatisticsBloc, StatisticsState>(
             builder: (context, state) {
               return Text('Thống kê ${state.selectedDays} ngày');
@@ -36,7 +43,6 @@ class StatisticsPage extends StatelessWidget {
             }
 
             // Khi thành công
-            // Dùng SingleChildScrollView (cuộn dọc) cho toàn bộ trang
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -71,22 +77,64 @@ class StatisticsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // 1. Biểu đồ Nước uống
+                  // === BIỂU ĐỒ 1: DINH DƯỠNG (MỚI) ===
                   Text(
-                    'Biểu đồ Nước uống (${state.selectedDays} ngày)', // Sửa tiêu đề
+                    'Dinh dưỡng nạp vào (${state.selectedDays} ngày)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      // Sửa width động
-                      width: state.selectedDays * 60.0, // 60px mỗi ngày
+                      width: state.selectedDays * 60.0,
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        // Truyền số ngày vào chart
-                        child: WaterChart(
+                        child: _NutritionSummaryChart(
+                          dataList: state.nutritionSummaryList,
+                          days: state.selectedDays,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // === BIỂU ĐỒ 2: LUYỆN TẬP (MỚI) ===
+                  const SizedBox(height: 32),
+                  Text(
+                    'Thời gian luyện tập (${state.selectedDays} ngày)',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: state.selectedDays * 60.0,
+                      height: 300,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16, top: 16),
+                        child: _WorkoutSummaryChart(
+                          dataList: state.workoutSummaryList,
+                          days: state.selectedDays,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 3. Biểu đồ Nước uống
+                  const SizedBox(height: 32),
+                  Text(
+                    'Nước uống (${state.selectedDays} ngày)',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: state.selectedDays * 60.0,
+                      height: 300,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16, top: 16),
+                        child: _WaterChart(
                           dataList: state.healthDataList,
                           days: state.selectedDays,
                         ),
@@ -94,14 +142,13 @@ class StatisticsPage extends StatelessWidget {
                     ),
                   ),
 
-                  // 2. Biểu đồ Bước đi
+                  // 4. Biểu đồ Bước đi
                   const SizedBox(height: 32),
                   Text(
-                    'Biểu đồ Bước đi (${state.selectedDays} ngày)', // Sửa
+                    'Bước đi (${state.selectedDays} ngày)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
-                  // Bọc biểu đồ bằng cuộn ngang
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
@@ -109,22 +156,21 @@ class StatisticsPage extends StatelessWidget {
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: StepsLineChart(
+                        child: _StepsLineChart(
                           dataList: state.healthDataList,
                           days: state.selectedDays,
-                        ), // Sửa
+                        ),
                       ),
                     ),
                   ),
 
-                  // 3. Biểu đồ Giấc ngủ (MỚI)
+                  // 5. Biểu đồ Giấc ngủ
                   const SizedBox(height: 32),
                   Text(
-                    'Biểu đồ Giấc ngủ (${state.selectedDays} ngày)',
+                    'Giấc ngủ (${state.selectedDays} ngày)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
-                  // Bọc biểu đồ bằng cuộn ngang
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
@@ -132,22 +178,21 @@ class StatisticsPage extends StatelessWidget {
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: SleepChart(
+                        child: _SleepChart(
                           dataList: state.healthDataList,
                           days: state.selectedDays,
-                        ), // Sửa
+                        ),
                       ),
                     ),
                   ),
 
-                  // 4. Biểu đồ Calo (MỚI)
+                  // 6. Biểu đồ Calo (từ HealthData)
                   const SizedBox(height: 32),
                   Text(
-                    'Biểu đồ Calo tiêu thụ (${state.selectedDays} ngày)',
+                    'Calo tiêu thụ (${state.selectedDays} ngày)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
-                  // Bọc biểu đồ bằng cuộn ngang
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
@@ -155,10 +200,10 @@ class StatisticsPage extends StatelessWidget {
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: CaloriesChart(
+                        child: _CaloriesChart(
                           dataList: state.healthDataList,
                           days: state.selectedDays,
-                        ), // Sửa
+                        ),
                       ),
                     ),
                   ),
@@ -173,13 +218,173 @@ class StatisticsPage extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------
-// BIỂU ĐỒ NƯỚC UỐNG (Bar Chart)
+// BIỂU ĐỒ DINH DƯỠNG (Stacked Bar Chart - MỚI)
 // -----------------------------------------------------------------
-class WaterChart extends StatelessWidget {
+class _NutritionSummaryChart extends StatelessWidget {
+  final List<NutritionSummary> dataList;
+  final int days;
+
+  const _NutritionSummaryChart({required this.dataList, required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<BarChartGroupData> barGroups = [];
+    final today = DateTime.now();
+    double maxY = 2500; // Tối thiểu 2500 kcal
+
+    for (int i = days - 1; i >= 0; i--) {
+      final date = today.subtract(Duration(days: i));
+      final data = dataList.firstWhere(
+        (item) =>
+            DateFormat('yyyy-MM-dd').format(item.date) ==
+            DateFormat('yyyy-MM-dd').format(date),
+
+        // === SỬA LỖI TẠI ĐÂY: Trả về NutritionSummaryModel ===
+        orElse: () => NutritionSummaryModel(
+          date: date,
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFat: 0,
+          totalCalories: 0,
+        ),
+      );
+
+      // Tính calo từ P-C-F (1g P = 4 kcal, 1g C = 4 kcal, 1g F = 9 kcal)
+      final double proteinCals = data.totalProtein * 4;
+      final double carbsCals = data.totalCarbs * 4;
+      final double fatCals = data.totalFat * 9;
+      final double totalCals = proteinCals + carbsCals + fatCals;
+
+      if (totalCals > maxY) {
+        maxY = totalCals * 1.2;
+      }
+
+      barGroups.add(
+        BarChartGroupData(
+          x: (days - 1) - i,
+          barRods: [
+            BarChartRodData(
+              toY: totalCals,
+              width: 22,
+              borderRadius: BorderRadius.circular(4),
+              // Đây là phần xếp chồng
+              rodStackItems: [
+                // Protein (Xanh)
+                BarChartRodStackItem(0, proteinCals, Colors.blue),
+                // Carb (Xanh lá)
+                BarChartRodStackItem(
+                  proteinCals,
+                  proteinCals + carbsCals,
+                  Colors.green,
+                ),
+                // Fat (Đỏ)
+                BarChartRodStackItem(
+                  proteinCals + carbsCals,
+                  totalCals,
+                  Colors.red,
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxY.ceilToDouble(),
+        barTouchData: BarTouchData(enabled: true),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: _bottomTitles(today, days),
+          leftTitles: _leftTitles(1000, maxY.ceilToDouble()), // 1k, 2k, ...
+        ),
+        borderData: FlBorderData(show: false),
+        gridData: FlGridData(show: true),
+        barGroups: barGroups,
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------
+// BIỂU ĐỒ LUYỆN TẬP (Bar Chart - MỚI)
+// -----------------------------------------------------------------
+class _WorkoutSummaryChart extends StatelessWidget {
+  final List<WorkoutSummary> dataList;
+  final int days;
+
+  const _WorkoutSummaryChart({required this.dataList, required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<BarChartGroupData> barGroups = [];
+    final today = DateTime.now();
+    double maxY = 60; // Tối thiểu 60 phút
+
+    for (int i = days - 1; i >= 0; i--) {
+      final date = today.subtract(Duration(days: i));
+      final data = dataList.firstWhere(
+        (item) =>
+            DateFormat('yyyy-MM-dd').format(item.date) ==
+            DateFormat('yyyy-MM-dd').format(date),
+
+        // === SỬA LỖI TẠI ĐÂY: Trả về WorkoutSummaryModel ===
+        orElse: () => WorkoutSummaryModel(
+          date: date,
+          totalDurationInMinutes: 0,
+          totalCaloriesBurned: 0,
+          totalDistanceInKm: 0,
+        ),
+      );
+
+      final double duration = data.totalDurationInMinutes.toDouble();
+      if (duration > maxY) {
+        maxY = duration * 1.2;
+      }
+
+      barGroups.add(
+        BarChartGroupData(
+          x: (days - 1) - i,
+          barRods: [
+            BarChartRodData(
+              toY: duration,
+              color: Colors.deepOrange,
+              width: 22,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxY.ceilToDouble(),
+        barTouchData: BarTouchData(enabled: true),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: _bottomTitles(today, days),
+          leftTitles: _leftTitles(30, maxY.ceilToDouble()), // 30, 60, 90...
+        ),
+        borderData: FlBorderData(show: false),
+        gridData: FlGridData(show: true),
+        barGroups: barGroups,
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------
+// BIỂU ĐỒ NƯỚC UỐNG (Đổi tên thành _WaterChart)
+// -----------------------------------------------------------------
+class _WaterChart extends StatelessWidget {
   final List<HealthData> dataList;
   final int days;
 
-  const WaterChart({super.key, required this.dataList, required this.days});
+  const _WaterChart({required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +398,7 @@ class WaterChart extends StatelessWidget {
         (item) =>
             DateFormat('yyyy-MM-dd').format(item.date) ==
             DateFormat('yyyy-MM-dd').format(date),
+        // Chỗ này vẫn dùng HealthDataModel là đúng
         orElse: () => HealthDataModel(date: date),
       );
 
@@ -238,13 +444,13 @@ class WaterChart extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------
-// BIỂU ĐỒ BƯỚC ĐI (Line Chart)
+// BIỂU ĐỒ BƯỚC ĐI (Đổi tên thành _StepsLineChart)
 // -----------------------------------------------------------------
-class StepsLineChart extends StatelessWidget {
+class _StepsLineChart extends StatelessWidget {
   final List<HealthData> dataList;
   final int days;
 
-  const StepsLineChart({super.key, required this.dataList, required this.days});
+  const _StepsLineChart({required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -303,13 +509,13 @@ class StepsLineChart extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------
-// BIỂU ĐỒ GIẤC NGỦ (Bar Chart) - MỚI
+// BIỂU ĐỒ GIẤC NGỦ (Đổi tên thành _SleepChart)
 // -----------------------------------------------------------------
-class SleepChart extends StatelessWidget {
+class _SleepChart extends StatelessWidget {
   final List<HealthData> dataList;
   final int days;
 
-  const SleepChart({super.key, required this.dataList, required this.days});
+  const _SleepChart({required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -367,13 +573,13 @@ class SleepChart extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------
-// BIỂU ĐỒ CALO (Line Chart) - MỚI
+// BIỂU ĐỒ CALO (Đổi tên thành _CaloriesChart)
 // -----------------------------------------------------------------
-class CaloriesChart extends StatelessWidget {
+class _CaloriesChart extends StatelessWidget {
   final List<HealthData> dataList;
   final int days;
 
-  const CaloriesChart({super.key, required this.dataList, required this.days});
+  const _CaloriesChart({required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +654,6 @@ AxisTitles _bottomTitles(DateTime today, int days) {
           return SideTitleWidget(meta: meta, child: const Text(''));
         }
 
-        // ----- SỬA LỖI Ở ĐÂY -----
         return SideTitleWidget(
           meta: meta,
           space: 4.0,
@@ -458,7 +663,6 @@ AxisTitles _bottomTitles(DateTime today, int days) {
             style: const TextStyle(fontSize: 10),
           ),
         );
-        // ----- KẾT THÚC SỬA LỖI -----
       },
       reservedSize: 38,
     ),

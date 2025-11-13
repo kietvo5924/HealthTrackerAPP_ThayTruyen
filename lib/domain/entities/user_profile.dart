@@ -10,6 +10,8 @@ class UserProfile extends Equatable {
   final String? address;
   final String? medicalHistory;
   final String? allergies;
+  final bool remindWater;
+  final bool remindSleep;
 
   const UserProfile({
     required this.id,
@@ -21,6 +23,8 @@ class UserProfile extends Equatable {
     this.address,
     this.medicalHistory,
     this.allergies,
+    required this.remindWater,
+    required this.remindSleep,
   });
 
   @override
@@ -34,5 +38,7 @@ class UserProfile extends Equatable {
     address,
     medicalHistory,
     allergies,
+    remindWater,
+    remindSleep,
   ];
 }

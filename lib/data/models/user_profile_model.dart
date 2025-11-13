@@ -11,6 +11,8 @@ class UserProfileModel extends UserProfile {
     super.address,
     super.medicalHistory,
     super.allergies,
+    required super.remindWater,
+    required super.remindSleep,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,8 @@ class UserProfileModel extends UserProfile {
       address: json['address'],
       medicalHistory: json['medicalHistory'],
       allergies: json['allergies'],
+      remindWater: json['remindWater'] ?? true,
+      remindSleep: json['remindSleep'] ?? true,
     );
   }
 

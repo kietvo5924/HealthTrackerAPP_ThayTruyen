@@ -26,8 +26,10 @@ import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.da
 import 'package:health_tracker_app/domain/usecases/get_health_data_range_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_nutrition_summary_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_user_profile_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_workout_comments_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_workout_summary_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/log_health_data_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/login_usecase.dart';
@@ -35,6 +37,7 @@ import 'package:health_tracker_app/domain/usecases/logout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/save_fcm_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/signup_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/toggle_workout_like_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/update_notification_settings_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_profile_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
@@ -127,6 +130,7 @@ Future<void> init() async {
 
   sl.registerLazySingleton(() => GetUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => UpdateUserProfileUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateNotificationSettingsUseCase(sl()));
 
   sl.registerLazySingleton(() => GetHealthDataUseCase(sl()));
   sl.registerLazySingleton(() => LogHealthDataUseCase(sl()));
@@ -141,13 +145,14 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetWorkoutCommentsUseCase(sl()));
   sl.registerLazySingleton(() => AddWorkoutCommentUseCase(sl()));
 
-  // --- THÊM MỚI (Nutrition) ---
   sl.registerLazySingleton(() => SearchFoodUseCase(sl()));
   sl.registerLazySingleton(() => GetMealsForDateUseCase(sl()));
   sl.registerLazySingleton(() => AddFoodToMealUseCase(sl()));
   sl.registerLazySingleton(() => DeleteMealItemUseCase(sl()));
   sl.registerLazySingleton(() => CreateFoodUseCase(sl()));
-  // --- KẾT THÚC THÊM MỚI ---
+
+  sl.registerLazySingleton(() => GetNutritionSummaryUseCase(sl()));
+  sl.registerLazySingleton(() => GetWorkoutSummaryUseCase(sl()));
 
   // ### BLoCs ###
   sl.registerSingleton<AuthBloc>(
@@ -165,6 +170,7 @@ Future<void> init() async {
     () => ProfileBloc(
       getUserProfileUseCase: sl(),
       updateUserProfileUseCase: sl(),
+      updateNotificationSettingsUseCase: sl(),
     ),
   );
   sl.registerFactory<HealthDataBloc>(
@@ -172,7 +178,11 @@ Future<void> init() async {
         HealthDataBloc(getHealthDataUseCase: sl(), logHealthDataUseCase: sl()),
   );
   sl.registerFactory<StatisticsBloc>(
-    () => StatisticsBloc(getHealthDataRangeUseCase: sl()),
+    () => StatisticsBloc(
+      getHealthDataRangeUseCase: sl(),
+      getNutritionSummaryUseCase: sl(), // <-- Thêm
+      getWorkoutSummaryUseCase: sl(),
+    ),
   );
   sl.registerFactory<WorkoutBloc>(
     () => WorkoutBloc(getMyWorkoutsUseCase: sl(), logWorkoutUseCase: sl()),

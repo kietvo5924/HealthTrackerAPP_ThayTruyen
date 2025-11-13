@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/domain/entities/workout_comment.dart';
+import 'package:health_tracker_app/domain/entities/workout_summary.dart';
 
 abstract class WorkoutRepository {
   // Lấy lịch sử bài tập
@@ -25,5 +26,10 @@ abstract class WorkoutRepository {
   Future<Either<Failure, WorkoutComment>> addComment({
     required int workoutId,
     required String text,
+  });
+
+  Future<Either<Failure, List<WorkoutSummary>>> getWorkoutSummary({
+    required DateTime startDate,
+    required DateTime endDate,
   });
 }

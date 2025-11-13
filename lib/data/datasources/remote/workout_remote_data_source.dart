@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:health_tracker_app/data/models/log_workout_request_model.dart';
 import 'package:health_tracker_app/data/models/workout_comment_model.dart';
 import 'package:health_tracker_app/data/models/workout_model.dart';
+import 'package:health_tracker_app/data/models/workout_summary_model.dart';
 
 abstract class WorkoutRemoteDataSource {
   Future<List<WorkoutModel>> getMyWorkouts();
@@ -13,6 +14,11 @@ abstract class WorkoutRemoteDataSource {
     required int workoutId,
     required String text,
   });
+
+  Future<List<WorkoutSummaryModel>> getWorkoutSummary(
+    String startDate,
+    String endDate,
+  );
 }
 
 class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
@@ -169,6 +175,31 @@ class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
         requestOptions: e.requestOptions,
         message: errorMessage,
       );
+    }
+  }
+
+  @override
+  Future<List<WorkoutSummaryModel>> getWorkoutSummary(
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final response = await dio.get(
+        '/workouts/summary',
+        queryParameters: {'startDate': startDate, 'endDate': endDate},
+      );
+      if (response.statusCode == 200) {
+        return (response.data as List)
+            .map((json) => WorkoutSummaryModel.fromJson(json))
+            .toList();
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Lấy tóm tắt luyện tập thất bại',
+        );
+      }
+    } on DioException {
+      rethrow;
     }
   }
 }
