@@ -61,6 +61,7 @@ class NutritionPage extends StatelessWidget {
                     lastDate: DateTime.now(),
                   );
                   if (pickedDate != null && pickedDate != state.selectedDate) {
+                    // ignore: use_build_context_synchronously
                     context.read<NutritionBloc>().add(
                       NutritionGetMeals(pickedDate),
                     );

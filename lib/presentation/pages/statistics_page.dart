@@ -499,6 +499,7 @@ class _StepsLineChart extends StatelessWidget {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
+              // ignore: deprecated_member_use
               color: Colors.orange.withOpacity(0.3),
             ),
           ),
@@ -628,6 +629,7 @@ class _CaloriesChart extends StatelessWidget {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
+              // ignore: deprecated_member_use
               color: Colors.red.withOpacity(0.3),
             ),
           ),
@@ -679,6 +681,7 @@ AxisTitles _leftTitles(double interval, double maxY) {
       reservedSize: 40,
       getTitlesWidget: (double value, TitleMeta meta) {
         if (value == 0) // Chỉ ẩn số 0
+          // ignore: curly_braces_in_flow_control_structures
           return SideTitleWidget(meta: meta, child: const Text(''));
 
         // Nếu là số lớn (hàng nghìn), hiển thị "k"

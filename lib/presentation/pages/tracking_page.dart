@@ -76,6 +76,7 @@ class _TrackingPageState extends State<TrackingPage> {
                   Text('Calo: ${calories.toStringAsFixed(0)} kcal'),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<WorkoutType>(
+                    // ignore: deprecated_member_use
                     value: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Loại bài tập',

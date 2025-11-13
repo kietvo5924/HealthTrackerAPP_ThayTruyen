@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:health_tracker_app/domain/entities/meal_item.dart';
 
 // Enum giống hệt backend
+// ignore: constant_identifier_names
 enum MealType { BREAKFAST, LUNCH, DINNER, SNACK }
 
 class Meal extends Equatable {

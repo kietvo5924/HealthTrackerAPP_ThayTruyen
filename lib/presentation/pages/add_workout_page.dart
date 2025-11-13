@@ -32,6 +32,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
     if (date == null) return; // Người dùng hủy
 
     final time = await showTimePicker(
+      // ignore: use_build_context_synchronously
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
     );
@@ -101,6 +102,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
               children: [
                 // 1. Chọn loại bài tập
                 DropdownButtonFormField<WorkoutType>(
+                  // ignore: deprecated_member_use
                   value: _selectedType,
                   decoration: const InputDecoration(
                     labelText: 'Loại bài tập',

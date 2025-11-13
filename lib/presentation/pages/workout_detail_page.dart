@@ -128,6 +128,7 @@ class _WorkoutDetailPageState extends State<WorkoutDetailPage> {
         });
       }
     } catch (e) {
+      // ignore: avoid_print
       print('Lỗi giải mã Polyline: $e');
     }
   }
@@ -218,6 +219,7 @@ class _WorkoutDetailPageState extends State<WorkoutDetailPage> {
                     _StatTile(
                       label: 'Quãng đường',
                       value:
+                          // ignore: unnecessary_string_interpolations
                           '${widget.workout.distanceInKm?.toStringAsFixed(2) ?? '0'}',
                       unit: 'km',
                     ),

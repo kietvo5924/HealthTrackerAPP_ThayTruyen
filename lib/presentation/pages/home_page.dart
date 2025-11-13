@@ -83,12 +83,15 @@ class HomePage extends StatelessWidget {
                   if (pickedDate != null &&
                       pickedDate != state.healthData.date) {
                     // 3. Gọi CẢ 3 BLoC để tải dữ liệu cho ngày mới
+                    // ignore: use_build_context_synchronously
                     context.read<HealthDataBloc>().add(
                       HealthDataFetched(pickedDate),
                     );
+                    // ignore: use_build_context_synchronously
                     context.read<NutritionBloc>().add(
                       NutritionGetMeals(pickedDate),
                     );
+                    // ignore: use_build_context_synchronously
                     context.read<WorkoutBloc>().add(WorkoutsFetched());
                   }
                 },
@@ -473,6 +476,7 @@ class HealthDataTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
+      // ignore: deprecated_member_use
       shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
@@ -527,6 +531,7 @@ class _CalorieSummaryCard extends StatelessWidget {
 
     return Card(
       elevation: 2,
+      // ignore: deprecated_member_use
       shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(

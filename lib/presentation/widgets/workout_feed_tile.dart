@@ -55,6 +55,7 @@ class WorkoutFeedTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
+      // ignore: deprecated_member_use
       shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(

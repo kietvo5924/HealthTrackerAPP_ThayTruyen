@@ -20,8 +20,10 @@ class UserGoalsRequestModel {
     if (goalWater != null) json['goalWater'] = goalWater;
     if (goalSleep != null) json['goalSleep'] = goalSleep;
     if (goalCaloriesBurnt != null)
+      // ignore: curly_braces_in_flow_control_structures
       json['goalCaloriesBurnt'] = goalCaloriesBurnt;
     if (goalCaloriesConsumed != null)
+      // ignore: curly_braces_in_flow_control_structures
       json['goalCaloriesConsumed'] = goalCaloriesConsumed;
     return json;
   }

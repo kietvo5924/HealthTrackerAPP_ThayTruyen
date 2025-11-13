@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -10,44 +9,41 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<ProfileBloc>()..add(ProfileFetched()),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Hồ sơ cá nhân'),
-          actions: [
-            _SaveProfileButton(), // Nút lưu
-          ],
-        ),
-        body: BlocConsumer<ProfileBloc, ProfileState>(
-          listener: (context, state) {
-            if (state.status == ProfileStatus.failure) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
-                );
-            } else if (state.status == ProfileStatus.success &&
-                // ignore: prefer_is_not_empty
-                !state.userProfile!.fullName.isEmpty) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  const SnackBar(content: Text('Cập nhật thành công!')),
-                );
-            }
-          },
-          builder: (context, state) {
-            if (state.status == ProfileStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (state.userProfile == null) {
-              return const Center(child: Text('Không tải được hồ sơ.'));
-            }
-            // Khi đã có dữ liệu
-            return const ProfileForm();
-          },
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hồ sơ cá nhân'),
+        actions: [
+          _SaveProfileButton(), // Nút lưu
+        ],
+      ),
+      body: BlocConsumer<ProfileBloc, ProfileState>(
+        listener: (context, state) {
+          if (state.status == ProfileStatus.failure) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(content: Text('Lỗi: ${state.errorMessage}')),
+              );
+          } else if (state.status == ProfileStatus.success &&
+              // ignore: prefer_is_not_empty
+              !state.userProfile!.fullName.isEmpty) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                const SnackBar(content: Text('Cập nhật thành công!')),
+              );
+          }
+        },
+        builder: (context, state) {
+          if (state.status == ProfileStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.userProfile == null) {
+            return const Center(child: Text('Không tải được hồ sơ.'));
+          }
+          // Khi đã có dữ liệu
+          return const ProfileForm();
+        },
       ),
     );
   }
