@@ -14,3 +14,11 @@ class StatisticsFetched extends StatisticsEvent {
 
   const StatisticsFetched({required this.endDate, this.days = 7});
 }
+
+class StatisticsDaysChanged extends StatisticsEvent {
+  final int days;
+  const StatisticsDaysChanged(this.days);
+
+  @override
+  List<Object> get props => [days];
+}

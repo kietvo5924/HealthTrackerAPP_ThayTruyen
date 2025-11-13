@@ -15,6 +15,7 @@ class Workout extends Equatable {
   final String? userFullName;
   final int likeCount;
   final bool likedByCurrentUser;
+  final int commentCount;
 
   const Workout({
     required this.id,
@@ -27,6 +28,7 @@ class Workout extends Equatable {
     this.userFullName,
     required this.likeCount,
     required this.likedByCurrentUser,
+    required this.commentCount,
   });
 
   @override
@@ -41,6 +43,7 @@ class Workout extends Equatable {
     userFullName,
     likeCount,
     likedByCurrentUser,
+    commentCount,
   ];
 
   Workout copyWith({
@@ -54,6 +57,7 @@ class Workout extends Equatable {
     String? userFullName,
     int? likeCount,
     bool? likedByCurrentUser,
+    int? commentCount,
   }) {
     return Workout(
       id: id ?? this.id,
@@ -66,6 +70,7 @@ class Workout extends Equatable {
       userFullName: userFullName ?? this.userFullName,
       likeCount: likeCount ?? this.likeCount,
       likedByCurrentUser: likedByCurrentUser ?? this.likedByCurrentUser,
+      commentCount: commentCount ?? this.commentCount,
     );
   }
 }

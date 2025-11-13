@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/utils/string_extensions.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
+import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:intl/intl.dart';
 
 class WorkoutFeedTile extends StatelessWidget {
@@ -72,7 +74,7 @@ class WorkoutFeedTile extends StatelessWidget {
                       // Lấy 2 chữ cái đầu
                       workout.userFullName?.substring(0, 2).toUpperCase() ??
                           '??',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -87,9 +89,10 @@ class WorkoutFeedTile extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        DateFormat.yMd().add_Hm().format(
-                          workout.startedAt.toLocal(),
-                        ),
+                        // Sửa lại format ngày tháng cho chuẩn 'vi_VN'
+                        DateFormat.yMd(
+                          'vi_VN',
+                        ).add_Hm().format(workout.startedAt.toLocal()),
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -149,10 +152,10 @@ class WorkoutFeedTile extends StatelessWidget {
                       style: TextStyle(color: Colors.grey),
                     ),
                   ),
-                  // (Nâng cao: Có thể dùng widget 'flutter_map'
-                  // với Polyline ở đây, nhưng sẽ phức tạp hơn)
                 ),
               const Divider(height: 24, thickness: 0.5),
+
+              // --- HÀNG LIKE/COMMENT ĐÃ SỬA ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -176,20 +179,59 @@ class WorkoutFeedTile extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${workout.likeCount} lượt thích',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
+
+                  // --- SỬA Ở ĐÂY: Giảm từ 8 xuống 4 ---
+                  const SizedBox(width: 4),
+
+                  // BỌC TEXT BẰNG FLEXIBLE
+                  Flexible(
+                    child: Text(
+                      '${workout.likeCount} lượt thích',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // (Bạn có thể thêm nút Bình luận ở đây sau)
-                  // const SizedBox(width: 24),
-                  // const Icon(Icons.comment_outlined, color: Colors.grey),
-                  // const SizedBox(width: 8),
-                  // Text('Bình luận'),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.comment_outlined,
+                      color: Colors.grey,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      // SỬA LẠI NAVIGATION: Cần cung cấp Bloc
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            // Lấy WorkoutBloc từ context cha (MainShellPage)
+                            value: context.read<WorkoutBloc>(),
+                            child: WorkoutDetailPage(workout: workout),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(width: 4),
+
+                  Flexible(
+                    child: Text(
+                      '${workout.commentCount} bình luận', // Hiển thị số lượng
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ],

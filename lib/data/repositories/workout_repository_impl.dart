@@ -4,6 +4,7 @@ import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/data/datasources/remote/workout_remote_data_source.dart';
 import 'package:health_tracker_app/data/models/log_workout_request_model.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
+import 'package:health_tracker_app/domain/entities/workout_comment.dart';
 import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
 
 class WorkoutRepositoryImpl implements WorkoutRepository {
@@ -73,6 +74,38 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
       final workoutModel = await remoteDataSource.toggleWorkoutLike(workoutId);
       // Trả về Entity (lớp cha)
       return Right(workoutModel);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    } catch (e) {
+      return Left(GenericFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<WorkoutComment>>> getComments(
+    int workoutId,
+  ) async {
+    try {
+      final commentModels = await remoteDataSource.getComments(workoutId);
+      return Right(commentModels); // Models là con của Entities
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    } catch (e) {
+      return Left(GenericFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, WorkoutComment>> addComment({
+    required int workoutId,
+    required String text,
+  }) async {
+    try {
+      final newComment = await remoteDataSource.addComment(
+        workoutId: workoutId,
+        text: text,
+      );
+      return Right(newComment);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));
     } catch (e) {

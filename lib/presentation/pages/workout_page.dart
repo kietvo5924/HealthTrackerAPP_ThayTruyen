@@ -236,7 +236,10 @@ class _WorkoutListTile extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => WorkoutDetailPage(workout: workout),
+              builder: (_) => BlocProvider.value(
+                value: context.read<WorkoutBloc>(),
+                child: WorkoutDetailPage(workout: workout),
+              ),
             ),
           );
         },

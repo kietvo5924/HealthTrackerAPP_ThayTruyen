@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
+import 'package:health_tracker_app/domain/entities/workout_comment.dart';
 
 abstract class WorkoutRepository {
   // Lấy lịch sử bài tập
@@ -19,4 +20,10 @@ abstract class WorkoutRepository {
   Future<Either<Failure, List<Workout>>> getCommunityFeed();
 
   Future<Either<Failure, Workout>> toggleWorkoutLike(int workoutId);
+
+  Future<Either<Failure, List<WorkoutComment>>> getComments(int workoutId);
+  Future<Either<Failure, WorkoutComment>> addComment({
+    required int workoutId,
+    required String text,
+  });
 }

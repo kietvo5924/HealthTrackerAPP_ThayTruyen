@@ -12,6 +12,7 @@ class WorkoutModel extends Workout {
     super.userFullName,
     required super.likeCount,
     required super.likedByCurrentUser,
+    required super.commentCount,
   });
 
   factory WorkoutModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +27,7 @@ class WorkoutModel extends Workout {
       userFullName: json['userFullName'],
       likeCount: json['likeCount'] ?? 0,
       likedByCurrentUser: json['likedByCurrentUser'] ?? false,
+      commentCount: json['commentCount'] ?? 0,
     );
   }
 

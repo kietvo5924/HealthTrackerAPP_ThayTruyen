@@ -17,7 +17,14 @@ class StatisticsPage extends StatelessWidget {
       create: (context) =>
           sl<StatisticsBloc>()..add(StatisticsFetched(endDate: DateTime.now())),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Thống kê 7 ngày')),
+        appBar: AppBar(
+          // --- SỬA TIÊU ĐỀ ĐỘNG ---
+          title: BlocBuilder<StatisticsBloc, StatisticsState>(
+            builder: (context, state) {
+              return Text('Thống kê ${state.selectedDays} ngày');
+            },
+          ),
+        ),
         body: BlocBuilder<StatisticsBloc, StatisticsState>(
           builder: (context, state) {
             if (state.status == StatisticsStatus.loading ||
@@ -35,21 +42,54 @@ class StatisticsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: ToggleButtons(
+                      isSelected: [
+                        state.selectedDays == 7, // Nút 7 ngày
+                        state.selectedDays == 30, // Nút 30 ngày
+                      ],
+                      onPressed: (index) {
+                        final days = (index == 0) ? 7 : 30;
+                        if (days != state.selectedDays) {
+                          context.read<StatisticsBloc>().add(
+                            StatisticsDaysChanged(days),
+                          );
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('7 ngày'),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('30 ngày'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // 1. Biểu đồ Nước uống
                   Text(
-                    'Biểu đồ Nước uống (lít)',
+                    'Biểu đồ Nước uống (${state.selectedDays} ngày)', // Sửa tiêu đề
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
-                  // Bọc biểu đồ bằng cuộn ngang
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      width: 500,
+                      // Sửa width động
+                      width: state.selectedDays * 60.0, // 60px mỗi ngày
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: WaterChart(dataList: state.healthDataList),
+                        // Truyền số ngày vào chart
+                        child: WaterChart(
+                          dataList: state.healthDataList,
+                          days: state.selectedDays,
+                        ),
                       ),
                     ),
                   ),
@@ -57,7 +97,7 @@ class StatisticsPage extends StatelessWidget {
                   // 2. Biểu đồ Bước đi
                   const SizedBox(height: 32),
                   Text(
-                    'Biểu đồ Bước đi (7 ngày)',
+                    'Biểu đồ Bước đi (${state.selectedDays} ngày)', // Sửa
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
@@ -65,11 +105,14 @@ class StatisticsPage extends StatelessWidget {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      width: 500,
+                      width: state.selectedDays * 60.0,
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: StepsLineChart(dataList: state.healthDataList),
+                        child: StepsLineChart(
+                          dataList: state.healthDataList,
+                          days: state.selectedDays,
+                        ), // Sửa
                       ),
                     ),
                   ),
@@ -77,7 +120,7 @@ class StatisticsPage extends StatelessWidget {
                   // 3. Biểu đồ Giấc ngủ (MỚI)
                   const SizedBox(height: 32),
                   Text(
-                    'Biểu đồ Giấc ngủ (giờ)',
+                    'Biểu đồ Giấc ngủ (${state.selectedDays} ngày)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
@@ -85,11 +128,14 @@ class StatisticsPage extends StatelessWidget {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      width: 500,
+                      width: state.selectedDays * 60.0,
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: SleepChart(dataList: state.healthDataList),
+                        child: SleepChart(
+                          dataList: state.healthDataList,
+                          days: state.selectedDays,
+                        ), // Sửa
                       ),
                     ),
                   ),
@@ -97,7 +143,7 @@ class StatisticsPage extends StatelessWidget {
                   // 4. Biểu đồ Calo (MỚI)
                   const SizedBox(height: 32),
                   Text(
-                    'Biểu đồ Calo tiêu thụ (kcal)',
+                    'Biểu đồ Calo tiêu thụ (${state.selectedDays} ngày)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 20),
@@ -105,11 +151,14 @@ class StatisticsPage extends StatelessWidget {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      width: 500,
+                      width: state.selectedDays * 60.0,
                       height: 300,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 16, top: 16),
-                        child: CaloriesChart(dataList: state.healthDataList),
+                        child: CaloriesChart(
+                          dataList: state.healthDataList,
+                          days: state.selectedDays,
+                        ), // Sửa
                       ),
                     ),
                   ),
@@ -128,7 +177,9 @@ class StatisticsPage extends StatelessWidget {
 // -----------------------------------------------------------------
 class WaterChart extends StatelessWidget {
   final List<HealthData> dataList;
-  const WaterChart({super.key, required this.dataList});
+  final int days;
+
+  const WaterChart({super.key, required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +187,7 @@ class WaterChart extends StatelessWidget {
     final today = DateTime.now();
     double maxY = 5; // Tối thiểu 5 lít
 
-    for (int i = 6; i >= 0; i--) {
+    for (int i = days - 1; i >= 0; i--) {
       final date = today.subtract(Duration(days: i));
       final data = dataList.firstWhere(
         (item) =>
@@ -152,7 +203,7 @@ class WaterChart extends StatelessWidget {
 
       barGroups.add(
         BarChartGroupData(
-          x: 6 - i, // Vị trí 0 -> 6
+          x: (days - 1) - i,
           barRods: [
             BarChartRodData(
               toY: data.waterIntake ?? 0,
@@ -172,7 +223,7 @@ class WaterChart extends StatelessWidget {
         barTouchData: BarTouchData(enabled: true),
         titlesData: FlTitlesData(
           show: true,
-          bottomTitles: _bottomTitles(today),
+          bottomTitles: _bottomTitles(today, days),
           leftTitles: _leftTitles(
             1,
             maxY.ceilToDouble(),
@@ -191,7 +242,9 @@ class WaterChart extends StatelessWidget {
 // -----------------------------------------------------------------
 class StepsLineChart extends StatelessWidget {
   final List<HealthData> dataList;
-  const StepsLineChart({super.key, required this.dataList});
+  final int days;
+
+  const StepsLineChart({super.key, required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +252,7 @@ class StepsLineChart extends StatelessWidget {
     final today = DateTime.now();
     double maxY = 10000; // Tối thiểu 10k bước
 
-    for (int i = 6; i >= 0; i--) {
+    for (int i = days - 1; i >= 0; i--) {
       final date = today.subtract(Duration(days: i));
       final data = dataList.firstWhere(
         (item) =>
@@ -213,7 +266,7 @@ class StepsLineChart extends StatelessWidget {
         maxY = steps * 1.2; // Tăng max Y nếu vượt mục tiêu
       }
 
-      spots.add(FlSpot((6 - i).toDouble(), steps)); // X: 0-6, Y: steps
+      spots.add(FlSpot(((days - 1) - i).toDouble(), steps));
     }
 
     return LineChart(
@@ -223,7 +276,7 @@ class StepsLineChart extends StatelessWidget {
         gridData: FlGridData(show: true),
         titlesData: FlTitlesData(
           show: true,
-          bottomTitles: _bottomTitles(today), // Dùng chung hàm
+          bottomTitles: _bottomTitles(today, days),
           leftTitles: _leftTitles(
             5000,
             maxY.ceilToDouble(),
@@ -254,7 +307,9 @@ class StepsLineChart extends StatelessWidget {
 // -----------------------------------------------------------------
 class SleepChart extends StatelessWidget {
   final List<HealthData> dataList;
-  const SleepChart({super.key, required this.dataList});
+  final int days;
+
+  const SleepChart({super.key, required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +317,7 @@ class SleepChart extends StatelessWidget {
     final today = DateTime.now();
     double maxY = 8; // Tối thiểu 8 giờ
 
-    for (int i = 6; i >= 0; i--) {
+    for (int i = days - 1; i >= 0; i--) {
       final date = today.subtract(Duration(days: i));
       final data = dataList.firstWhere(
         (item) =>
@@ -277,7 +332,7 @@ class SleepChart extends StatelessWidget {
 
       barGroups.add(
         BarChartGroupData(
-          x: 6 - i, // Vị trí 0 -> 6
+          x: (days - 1) - i,
           barRods: [
             BarChartRodData(
               toY: data.sleepHours ?? 0,
@@ -297,7 +352,7 @@ class SleepChart extends StatelessWidget {
         barTouchData: BarTouchData(enabled: true),
         titlesData: FlTitlesData(
           show: true,
-          bottomTitles: _bottomTitles(today),
+          bottomTitles: _bottomTitles(today, days),
           leftTitles: _leftTitles(
             2,
             maxY.ceilToDouble(),
@@ -316,7 +371,9 @@ class SleepChart extends StatelessWidget {
 // -----------------------------------------------------------------
 class CaloriesChart extends StatelessWidget {
   final List<HealthData> dataList;
-  const CaloriesChart({super.key, required this.dataList});
+  final int days;
+
+  const CaloriesChart({super.key, required this.dataList, required this.days});
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +381,7 @@ class CaloriesChart extends StatelessWidget {
     final today = DateTime.now();
     double maxY = 2500; // Tối thiểu 2500 kcal
 
-    for (int i = 6; i >= 0; i--) {
+    for (int i = days - 1; i >= 0; i--) {
       final date = today.subtract(Duration(days: i));
       final data = dataList.firstWhere(
         (item) =>
@@ -338,7 +395,7 @@ class CaloriesChart extends StatelessWidget {
         maxY = calories * 1.2;
       }
 
-      spots.add(FlSpot((6 - i).toDouble(), calories)); // X: 0-6, Y: calories
+      spots.add(FlSpot(((days - 1) - i).toDouble(), calories));
     }
 
     return LineChart(
@@ -348,7 +405,7 @@ class CaloriesChart extends StatelessWidget {
         gridData: FlGridData(show: true),
         titlesData: FlTitlesData(
           show: true,
-          bottomTitles: _bottomTitles(today), // Dùng chung hàm
+          bottomTitles: _bottomTitles(today, days),
           leftTitles: _leftTitles(
             1000,
             maxY.ceilToDouble(),
@@ -377,13 +434,19 @@ class CaloriesChart extends StatelessWidget {
 // -----------------------------------------------------------------
 // HÀM HELPER DÙNG CHUNG CHO TRỤC X (NGÀY THÁNG)
 // -----------------------------------------------------------------
-AxisTitles _bottomTitles(DateTime today) {
+AxisTitles _bottomTitles(DateTime today, int days) {
   return AxisTitles(
     sideTitles: SideTitles(
       showTitles: true,
       getTitlesWidget: (double value, TitleMeta meta) {
-        final daysAgo = 6 - value.toInt();
+        final daysAgo = (days - 1) - value.toInt();
         final date = today.subtract(Duration(days: daysAgo));
+
+        // Chỉ hiển thị label cho một số ngày nếu là 30 ngày
+        if (days == 30 && value % 5 != 0) {
+          // Chỉ hiển thị mỗi 5 ngày
+          return SideTitleWidget(meta: meta, child: const Text(''));
+        }
 
         // ----- SỬA LỖI Ở ĐÂY -----
         return SideTitleWidget(
@@ -411,7 +474,7 @@ AxisTitles _leftTitles(double interval, double maxY) {
       showTitles: true,
       reservedSize: 40,
       getTitlesWidget: (double value, TitleMeta meta) {
-        if (value == 0 || value > maxY)
+        if (value == 0) // Chỉ ẩn số 0
           return SideTitleWidget(meta: meta, child: const Text(''));
 
         // Nếu là số lớn (hàng nghìn), hiển thị "k"

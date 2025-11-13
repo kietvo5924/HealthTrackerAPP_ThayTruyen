@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:health_tracker_app/data/models/log_workout_request_model.dart';
+import 'package:health_tracker_app/data/models/workout_comment_model.dart';
 import 'package:health_tracker_app/data/models/workout_model.dart';
 
 abstract class WorkoutRemoteDataSource {
@@ -7,6 +8,11 @@ abstract class WorkoutRemoteDataSource {
   Future<WorkoutModel> logWorkout(LogWorkoutRequestModel request);
   Future<List<WorkoutModel>> getCommunityFeed();
   Future<WorkoutModel> toggleWorkoutLike(int workoutId);
+  Future<List<WorkoutCommentModel>> getComments(int workoutId);
+  Future<WorkoutCommentModel> addComment({
+    required int workoutId,
+    required String text,
+  });
 }
 
 class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
@@ -103,6 +109,58 @@ class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
         throw DioException(
           requestOptions: response.requestOptions,
           message: 'Like/Unlike thất bại',
+        );
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data?['message'] ?? 'Lỗi không xác định';
+      throw DioException(
+        requestOptions: e.requestOptions,
+        message: errorMessage,
+      );
+    }
+  }
+
+  @override
+  Future<List<WorkoutCommentModel>> getComments(int workoutId) async {
+    try {
+      final response = await dio.get('/workouts/$workoutId/comments');
+      if (response.statusCode == 200) {
+        return (response.data as List)
+            .map((comment) => WorkoutCommentModel.fromJson(comment))
+            .toList();
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Lấy bình luận thất bại',
+        );
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data?['message'] ?? 'Lỗi không xác định';
+      throw DioException(
+        requestOptions: e.requestOptions,
+        message: errorMessage,
+      );
+    }
+  }
+
+  @override
+  Future<WorkoutCommentModel> addComment({
+    required int workoutId,
+    required String text,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/workouts/$workoutId/comments',
+        data: {'text': text}, // Gửi DTO
+      );
+
+      if (response.statusCode == 201) {
+        // 201 Created
+        return WorkoutCommentModel.fromJson(response.data);
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Thêm bình luận thất bại',
         );
       }
     } on DioException catch (e) {

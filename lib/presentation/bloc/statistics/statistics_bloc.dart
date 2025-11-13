@@ -11,8 +11,9 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
 
   StatisticsBloc({required GetHealthDataRangeUseCase getHealthDataRangeUseCase})
     : _getHealthDataRangeUseCase = getHealthDataRangeUseCase,
-      super(const StatisticsState()) {
+      super(const StatisticsState(selectedDays: 7)) {
     on<StatisticsFetched>(_onStatisticsFetched);
+    on<StatisticsDaysChanged>(_onDaysChanged);
   }
 
   Future<void> _onStatisticsFetched(
@@ -36,6 +37,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
           state.copyWith(
             status: StatisticsStatus.failure,
             errorMessage: failure.message,
+            selectedDays: event.days,
           ),
         );
       },
@@ -44,9 +46,26 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
           state.copyWith(
             status: StatisticsStatus.success,
             healthDataList: dataList,
+            selectedDays: event.days,
           ),
         );
       },
     );
+  }
+
+  Future<void> _onDaysChanged(
+    StatisticsDaysChanged event,
+    Emitter<StatisticsState> emit,
+  ) async {
+    // 1. Phát ra state loading với số ngày mới
+    emit(
+      state.copyWith(
+        selectedDays: event.days,
+        status: StatisticsStatus.loading,
+      ),
+    );
+
+    // 2. Kích hoạt lại việc tải dữ liệu bằng event StatisticsFetched
+    add(StatisticsFetched(endDate: DateTime.now(), days: event.days));
   }
 }

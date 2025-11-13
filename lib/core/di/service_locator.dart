@@ -20,12 +20,14 @@ import 'package:health_tracker_app/domain/repositories/health_data_repository.da
 import 'package:health_tracker_app/domain/repositories/notification_repository.dart';
 import 'package:health_tracker_app/domain/repositories/user_repository.dart';
 import 'package:health_tracker_app/domain/repositories/workout_repository.dart';
+import 'package:health_tracker_app/domain/usecases/add_workout_comment_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_auth_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_range_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_user_profile_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_workout_comments_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/log_health_data_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/login_usecase.dart';
@@ -136,6 +138,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LogWorkoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCommunityFeedUseCase(sl()));
   sl.registerLazySingleton(() => ToggleWorkoutLikeUseCase(sl()));
+  sl.registerLazySingleton(() => GetWorkoutCommentsUseCase(sl()));
+  sl.registerLazySingleton(() => AddWorkoutCommentUseCase(sl()));
 
   // --- THÊM MỚI (Nutrition) ---
   sl.registerLazySingleton(() => SearchFoodUseCase(sl()));
