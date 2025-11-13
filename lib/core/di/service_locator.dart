@@ -38,6 +38,7 @@ import 'package:health_tracker_app/domain/usecases/save_fcm_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/signup_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/toggle_workout_like_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_notification_settings_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/update_user_goals_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_profile_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
@@ -131,6 +132,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => UpdateUserProfileUseCase(sl()));
   sl.registerLazySingleton(() => UpdateNotificationSettingsUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateUserGoalsUseCase(sl()));
 
   sl.registerLazySingleton(() => GetHealthDataUseCase(sl()));
   sl.registerLazySingleton(() => LogHealthDataUseCase(sl()));
@@ -171,6 +173,7 @@ Future<void> init() async {
       getUserProfileUseCase: sl(),
       updateUserProfileUseCase: sl(),
       updateNotificationSettingsUseCase: sl(),
+      updateUserGoalsUseCase: sl(),
     ),
   );
   sl.registerFactory<HealthDataBloc>(

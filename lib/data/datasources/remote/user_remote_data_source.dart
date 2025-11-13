@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:health_tracker_app/data/models/notification_settings_request_model.dart';
+import 'package:health_tracker_app/data/models/user_goals_request_model.dart';
 import 'package:health_tracker_app/data/models/user_profile_model.dart';
 
 abstract class UserRemoteDataSource {
@@ -8,6 +9,7 @@ abstract class UserRemoteDataSource {
   Future<UserProfileModel> updateNotificationSettings(
     NotificationSettingsRequestModel settings,
   );
+  Future<UserProfileModel> updateUserGoals(UserGoalsRequestModel goals);
 }
 
 class UserRemoteDataSourceImpl implements UserRemoteDataSource {
@@ -77,6 +79,30 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         throw DioException(
           requestOptions: response.requestOptions,
           message: 'Cập nhật cài đặt thất bại',
+        );
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data?['message'] ?? 'Lỗi không xác định';
+      throw DioException(
+        requestOptions: e.requestOptions,
+        message: errorMessage,
+      );
+    }
+  }
+
+  @override
+  Future<UserProfileModel> updateUserGoals(UserGoalsRequestModel goals) async {
+    try {
+      final response = await dio.put(
+        '/users/me/goals', // API endpoint mới
+        data: goals.toJson(),
+      );
+      if (response.statusCode == 200) {
+        return UserProfileModel.fromJson(response.data);
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          message: 'Cập nhật mục tiêu thất bại',
         );
       }
     } on DioException catch (e) {

@@ -12,6 +12,11 @@ class UserProfile extends Equatable {
   final String? allergies;
   final bool remindWater;
   final bool remindSleep;
+  final int goalSteps;
+  final double goalWater;
+  final double goalSleep;
+  final int goalCaloriesBurnt;
+  final int goalCaloriesConsumed;
 
   const UserProfile({
     required this.id,
@@ -25,6 +30,11 @@ class UserProfile extends Equatable {
     this.allergies,
     required this.remindWater,
     required this.remindSleep,
+    required this.goalSteps,
+    required this.goalWater,
+    required this.goalSleep,
+    required this.goalCaloriesBurnt,
+    required this.goalCaloriesConsumed,
   });
 
   @override
@@ -40,5 +50,10 @@ class UserProfile extends Equatable {
     allergies,
     remindWater,
     remindSleep,
+    goalSteps,
+    goalWater,
+    goalSleep,
+    goalCaloriesBurnt,
+    goalCaloriesConsumed,
   ];
 }

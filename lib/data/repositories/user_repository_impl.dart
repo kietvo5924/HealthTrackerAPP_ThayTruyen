@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:health_tracker_app/core/error/failures.dart';
 import 'package:health_tracker_app/data/datasources/remote/user_remote_data_source.dart';
 import 'package:health_tracker_app/data/models/notification_settings_request_model.dart';
+import 'package:health_tracker_app/data/models/user_goals_request_model.dart';
 import 'package:health_tracker_app/data/models/user_profile_model.dart';
 import 'package:health_tracker_app/domain/entities/user_profile.dart';
 import 'package:health_tracker_app/domain/repositories/user_repository.dart';
@@ -40,6 +41,11 @@ class UserRepositoryImpl implements UserRepository {
         allergies: profile.allergies,
         remindWater: profile.remindWater,
         remindSleep: profile.remindSleep,
+        goalSteps: profile.goalSteps,
+        goalWater: profile.goalWater,
+        goalSleep: profile.goalSleep,
+        goalCaloriesBurnt: profile.goalCaloriesBurnt,
+        goalCaloriesConsumed: profile.goalCaloriesConsumed,
       );
 
       final updatedProfile = await remoteDataSource.updateUserProfile(
@@ -59,6 +65,18 @@ class UserRepositoryImpl implements UserRepository {
       final updatedProfile = await remoteDataSource.updateNotificationSettings(
         settings,
       );
+      return Right(updatedProfile);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile>> updateUserGoals(
+    UserGoalsRequestModel goals,
+  ) async {
+    try {
+      final updatedProfile = await remoteDataSource.updateUserGoals(goals);
       return Right(updatedProfile);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));

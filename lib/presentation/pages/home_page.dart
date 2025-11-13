@@ -11,6 +11,9 @@ import 'package:health_tracker_app/presentation/widgets/circular_health_tile.dar
 import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 
+import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
+import 'package:health_tracker_app/domain/entities/user_profile.dart';
+
 // Hàm này sẽ trả về "Hôm nay", "Hôm qua", hoặc "dd/MM/yyyy"
 String _buildTitle(DateTime date) {
   final now = DateTime.now();
@@ -32,6 +35,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // === SỬA Ở ĐÂY: LẤY MỤC TIÊU TỪ PROFILEBLOC (KHÔNG PHẢI AUTHBLOC) ===
+    final profileState = context.watch<ProfileBloc>().state;
+    // Lấy userProfile nếu state có
+    final UserProfile? userProfile = profileState.userProfile;
+
+    // Đặt mục tiêu (với giá trị mặc định nếu profile null)
+    final int goalSteps = userProfile?.goalSteps ?? 10000;
+    final double goalWater = userProfile?.goalWater ?? 2.5;
+    final double goalSleep = userProfile?.goalSleep ?? 8.0;
+    final int goalCaloriesBurnt = userProfile?.goalCaloriesBurnt ?? 500;
+    // === KẾT THÚC SỬA LỖI ===
+
     return BlocBuilder<HealthDataBloc, HealthDataState>(
       builder: (context, state) {
         return Scaffold(
@@ -49,7 +64,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
             actions: [
-              // --- THÊM MỚI: NÚT CHỌN NGÀY ---
+              // --- NÚT CHỌN NGÀY ---
               IconButton(
                 icon: const Icon(
                   Icons.calendar_today_outlined,
@@ -78,7 +93,6 @@ class HomePage extends StatelessWidget {
                   }
                 },
               ),
-
               // --- KẾT THÚC THÊM MỚI ---
               IconButton(
                 icon: const Icon(Icons.bar_chart, color: Colors.black),
@@ -109,9 +123,7 @@ class HomePage extends StatelessWidget {
             ],
           ),
 
-          // --- SỬA ĐỔI: Bỏ BlocConsumer (vì đã có ở trên) ---
           body: BlocConsumer<HealthDataBloc, HealthDataState>(
-            // (Chúng ta giữ BlocConsumer ở đây để xử lý SnackBar)
             listener: (context, state) {
               if (state.status == HealthDataStatus.failure) {
                 ScaffoldMessenger.of(context)
@@ -138,8 +150,14 @@ class HomePage extends StatelessWidget {
                 return Center(child: Text('Lỗi: ${state.errorMessage}'));
               }
 
-              // Hiển thị Dashboard
-              return HealthDataDashboard(healthData: state.healthData);
+              // === SỬA Ở ĐÂY: Truyền mục tiêu vào Dashboard ===
+              return HealthDataDashboard(
+                healthData: state.healthData,
+                goalSteps: goalSteps,
+                goalWater: goalWater,
+                goalSleep: goalSleep,
+                goalCaloriesBurnt: goalCaloriesBurnt,
+              );
             },
           ),
         );
@@ -150,22 +168,37 @@ class HomePage extends StatelessWidget {
 
 class HealthDataDashboard extends StatelessWidget {
   final HealthData healthData;
-  const HealthDataDashboard({super.key, required this.healthData});
+  // === THÊM CÁC TRƯỜNG MỤC TIÊU ===
+  final int goalSteps;
+  final double goalWater;
+  final double goalSleep;
+  final int goalCaloriesBurnt;
 
-  // Đặt mục tiêu
-  final int stepGoal = 8000;
-  final double waterGoal = 2.5;
-  final double sleepGoal = 8;
-  final int caloriesGoal = 2000;
+  const HealthDataDashboard({
+    super.key,
+    required this.healthData,
+    // === THÊM VÀO CONSTRUCTOR ===
+    required this.goalSteps,
+    required this.goalWater,
+    required this.goalSleep,
+    required this.goalCaloriesBurnt,
+  });
+
+  // (Xóa 4 dòng "final int stepGoal = 8000;"...)
 
   @override
   Widget build(BuildContext context) {
-    // Tính toán % tiến độ
-    final double stepProgress = (healthData.steps ?? 0) / stepGoal;
-    final double waterProgress = (healthData.waterIntake ?? 0) / waterGoal;
-    final double sleepProgress = (healthData.sleepHours ?? 0) / sleepGoal;
+    // === SỬA LẠI TÍNH TOÁN (dùng biến `goal...` thay vì `stepGoal`...) ===
+    // Thêm `> 0 ? ... : 1` để tránh lỗi chia cho 0 nếu mục tiêu là 0
+    final double stepProgress =
+        (healthData.steps ?? 0) / (goalSteps > 0 ? goalSteps : 1);
+    final double waterProgress =
+        (healthData.waterIntake ?? 0) / (goalWater > 0 ? goalWater : 1);
+    final double sleepProgress =
+        (healthData.sleepHours ?? 0) / (goalSleep > 0 ? goalSleep : 1);
     final double caloriesProgress =
-        (healthData.caloriesBurnt ?? 0) / caloriesGoal;
+        (healthData.caloriesBurnt ?? 0) /
+        (goalCaloriesBurnt > 0 ? goalCaloriesBurnt : 1);
 
     // --- SỬA ĐỔI: Kiểm tra xem có phải hôm nay không ---
     final now = DateTime.now();
@@ -193,11 +226,11 @@ class HealthDataDashboard extends StatelessWidget {
                 label: 'Bước đi',
                 icon: Icons.run_circle_outlined,
                 value: healthData.steps?.toString() ?? '0',
-                unit: '/ $stepGoal',
+                unit: '/ $goalSteps', // <-- SỬA
                 progress: stepProgress > 1.0 ? 1.0 : stepProgress,
                 progressColor: Colors.orange,
                 onTap: () {
-                  // Chỉ cho phép sửa/xem nếu là hôm nay (vì cảm biến đang chạy)
+                  // (Logic onTap không đổi)
                   if (isToday) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -222,11 +255,11 @@ class HealthDataDashboard extends StatelessWidget {
                 label: 'Nước uống',
                 icon: Icons.local_drink_outlined,
                 value: healthData.waterIntake?.toString() ?? '0',
-                unit: 'L',
+                unit: '/ $goalWater L', // <-- SỬA
                 progress: waterProgress > 1.0 ? 1.0 : waterProgress,
                 progressColor: Colors.blue,
                 onTap: () {
-                  // --- SỬA ĐỔI: Chỉ cho phép sửa nếu là hôm nay ---
+                  // (Logic onTap không đổi)
                   if (!isToday) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -237,8 +270,6 @@ class HealthDataDashboard extends StatelessWidget {
                     );
                     return;
                   }
-                  // --- KẾT THÚC SỬA ĐỔI ---
-
                   _showLogDialog(
                     context,
                     title: 'Nhập lượng nước đã uống',
@@ -263,10 +294,11 @@ class HealthDataDashboard extends StatelessWidget {
                 label: 'Giấc ngủ',
                 icon: Icons.hotel_outlined,
                 value: healthData.sleepHours?.toString() ?? '0',
-                unit: 'giờ',
+                unit: '/ $goalSleep giờ', // <-- SỬA
                 progress: sleepProgress > 1.0 ? 1.0 : sleepProgress,
                 progressColor: Colors.purple,
                 onTap: () {
+                  // (Logic onTap không đổi)
                   if (!isToday) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -301,10 +333,11 @@ class HealthDataDashboard extends StatelessWidget {
                 label: 'Calo tiêu thụ',
                 icon: Icons.local_fire_department_outlined,
                 value: healthData.caloriesBurnt?.toString() ?? '0',
-                unit: 'kcal',
+                unit: '/ $goalCaloriesBurnt kcal', // <-- SỬA
                 progress: caloriesProgress > 1.0 ? 1.0 : caloriesProgress,
                 progressColor: Colors.red,
                 onTap: () {
+                  // (Logic onTap không đổi)
                   if (!isToday) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -347,6 +380,7 @@ class HealthDataDashboard extends StatelessWidget {
             label: 'Cân nặng',
             value: '${healthData.weight?.toString() ?? 'N/A'} kg',
             onTap: () {
+              // (Logic onTap không đổi)
               if (!isToday) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -484,6 +518,13 @@ class _CalorieSummaryCard extends StatelessWidget {
       (HealthDataBloc bloc) => bloc.state.healthData.date,
     );
 
+    // === LẤY MỤC TIÊU CALO NẠP VÀO TỪ PROFILE BLOC ===
+    final goalCaloriesConsumed = context.select(
+      (ProfileBloc bloc) =>
+          bloc.state.userProfile?.goalCaloriesConsumed ?? 2000,
+    );
+    // === KẾT THÚC ===
+
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.1),
@@ -504,7 +545,6 @@ class _CalorieSummaryCard extends StatelessWidget {
                 // 1. Calo Nạp vào (từ NutritionBloc)
                 BlocBuilder<NutritionBloc, NutritionState>(
                   builder: (context, state) {
-                    // Chỉ tính calo cho ngày đang chọn
                     if (state.status == NutritionStatus.loading) {
                       return const _StatTile(
                         label: 'Nạp vào',
@@ -512,7 +552,6 @@ class _CalorieSummaryCard extends StatelessWidget {
                         unit: 'kcal',
                       );
                     }
-                    // Tính tổng calo từ các bữa ăn
                     final caloriesIn = state.meals.fold<double>(
                       0.0,
                       (sum, meal) => sum + meal.totalMealCalories,
@@ -520,7 +559,8 @@ class _CalorieSummaryCard extends StatelessWidget {
                     return _StatTile(
                       label: 'Nạp vào',
                       value: caloriesIn.toInt().toString(),
-                      unit: 'kcal',
+                      // === SỬA MỤC TIÊU CỨNG ===
+                      unit: '/ $goalCaloriesConsumed kcal',
                     );
                   },
                 ),
@@ -550,8 +590,6 @@ class _CalorieSummaryCard extends StatelessWidget {
                 // 3. Kết quả (Thâm hụt/Dư thừa)
                 MultiBlocListener(
                   listeners: [
-                    // Dùng MultiBlocListener để lấy state từ nhiều BLoC
-                    // và tính toán kết quả cuối cùng
                     BlocListener<NutritionBloc, NutritionState>(
                       listener: (context, state) {},
                     ),
@@ -573,15 +611,22 @@ class _CalorieSummaryCard extends StatelessWidget {
                       );
                       final caloriesOut =
                           healthState.healthData.caloriesBurnt ?? 0;
-                      final remaining = caloriesIn - caloriesOut;
 
-                      final isDeficit = remaining < 0; // Thâm hụt
+                      // === SỬA LOGIC TÍNH TOÁN CÒN LẠI ===
+                      // (Calo nạp vào - Calo mục tiêu) + (Calo vận động)
+                      // Logic đúng: Calo mục tiêu - (Calo nạp vào - Calo vận động)
+                      // Logic đơn giản: (Calo nạp vào - Calo vận động)
+                      final netCalories = caloriesIn - caloriesOut;
+
+                      // So sánh với mục tiêu nạp vào
+                      final remaining = goalCaloriesConsumed - netCalories;
 
                       return _StatTile(
-                        label: isDeficit ? 'Thâm hụt' : 'Dư thừa',
-                        value: remaining.toInt().abs().toString(),
+                        // Sửa logic hiển thị
+                        label: 'Còn lại',
+                        value: remaining.toInt().toString(),
                         unit: 'kcal',
-                        valueColor: isDeficit ? Colors.green : Colors.red,
+                        valueColor: remaining > 0 ? Colors.green : Colors.red,
                       );
                     },
                   ),
@@ -594,7 +639,7 @@ class _CalorieSummaryCard extends StatelessWidget {
             // Thông tin thêm: Calo từ Vận động (từ WorkoutBloc)
             BlocBuilder<WorkoutBloc, WorkoutState>(
               builder: (context, state) {
-                // Lọc và tính tổng calo từ các bài tập trong ngày đã chọn
+                // (Logic này giữ nguyên, không thay đổi)
                 final activeCalories = state.workouts
                     .where(
                       (w) => DateUtils.isSameDay(

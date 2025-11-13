@@ -4,7 +4,7 @@ abstract class ProfileEvent extends Equatable {
   const ProfileEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 // Event để tải profile
@@ -31,8 +31,6 @@ class ProfileAddressChanged extends ProfileEvent {
   const ProfileAddressChanged(this.address);
 }
 
-// ... (thêm cho medicalHistory, allergies nếu cần) ...
-
 // Event khi nhấn nút lưu
 class ProfileSubmitted extends ProfileEvent {}
 
@@ -57,4 +55,31 @@ class ProfileNotificationSettingsChanged extends ProfileEvent {
 
   @override
   List<Object> get props => [remindWater, remindSleep];
+}
+
+// Event này sẽ được gọi khi BẤT KỲ mục tiêu nào thay đổi
+class ProfileGoalChanged extends ProfileEvent {
+  // Dùng ? (nullable) để chúng ta chỉ cần gửi giá trị thay đổi
+  final int? goalSteps;
+  final double? goalWater;
+  final double? goalSleep;
+  final int? goalCaloriesBurnt;
+  final int? goalCaloriesConsumed;
+
+  const ProfileGoalChanged({
+    this.goalSteps,
+    this.goalWater,
+    this.goalSleep,
+    this.goalCaloriesBurnt,
+    this.goalCaloriesConsumed,
+  });
+
+  @override
+  List<Object?> get props => [
+    goalSteps,
+    goalWater,
+    goalSleep,
+    goalCaloriesBurnt,
+    goalCaloriesConsumed,
+  ];
 }

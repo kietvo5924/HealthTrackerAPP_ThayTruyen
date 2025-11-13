@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/home_page.dart';
 import 'package:health_tracker_app/presentation/pages/nutrition_page.dart';
 import 'package:health_tracker_app/presentation/pages/profile_page.dart';
@@ -33,6 +34,10 @@ class _MainShellPageState extends State<MainShellPage> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<ProfileBloc>(
+          create: (context) =>
+              sl<ProfileBloc>()..add(ProfileFetched()), // <-- Gọi event ở đây
+        ),
         // Cung cấp HealthDataBloc cho toàn bộ các tab
         BlocProvider(
           create: (context) =>

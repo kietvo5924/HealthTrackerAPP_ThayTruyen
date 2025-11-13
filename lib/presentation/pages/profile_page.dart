@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
@@ -89,6 +90,21 @@ class ProfileForm extends StatelessWidget {
     // Dùng Key để khởi tạo giá trị cho các TextFormField
     final profile = context.select(
       (ProfileBloc bloc) => bloc.state.userProfile!,
+    );
+    final goalStepsController = TextEditingController(
+      text: profile.goalSteps.toString(),
+    );
+    final goalWaterController = TextEditingController(
+      text: profile.goalWater.toString(),
+    );
+    final goalSleepController = TextEditingController(
+      text: profile.goalSleep.toString(),
+    );
+    final goalCaloriesBurntController = TextEditingController(
+      text: profile.goalCaloriesBurnt.toString(),
+    );
+    final goalCaloriesConsumedController = TextEditingController(
+      text: profile.goalCaloriesConsumed.toString(),
     );
 
     return SingleChildScrollView(
@@ -196,6 +212,127 @@ class ProfileForm extends StatelessWidget {
               );
             },
           ),
+          const Divider(thickness: 1, height: 32),
+
+          Text(
+            'Mục tiêu cá nhân',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+
+          // Mục tiêu Bước đi
+          TextFormField(
+            controller: goalStepsController,
+            decoration: const InputDecoration(
+              labelText: 'Mục tiêu Bước đi',
+              suffixText: 'bước',
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onEditingComplete: () {
+              final newValue = int.tryParse(goalStepsController.text);
+              if (newValue != null && newValue != profile.goalSteps) {
+                context.read<ProfileBloc>().add(
+                  ProfileGoalChanged(goalSteps: newValue),
+                );
+              }
+              FocusScope.of(context).unfocus();
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Mục tiêu Nước uống
+          TextFormField(
+            controller: goalWaterController,
+            decoration: const InputDecoration(
+              labelText: 'Mục tiêu Nước uống',
+              suffixText: 'lít',
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+            ],
+            onEditingComplete: () {
+              final newValue = double.tryParse(goalWaterController.text);
+              if (newValue != null && newValue != profile.goalWater) {
+                context.read<ProfileBloc>().add(
+                  ProfileGoalChanged(goalWater: newValue),
+                );
+              }
+              FocusScope.of(context).unfocus();
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Mục tiêu Giấc ngủ
+          TextFormField(
+            controller: goalSleepController,
+            decoration: const InputDecoration(
+              labelText: 'Mục tiêu Giấc ngủ',
+              suffixText: 'giờ',
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+            ],
+            onEditingComplete: () {
+              final newValue = double.tryParse(goalSleepController.text);
+              if (newValue != null && newValue != profile.goalSleep) {
+                context.read<ProfileBloc>().add(
+                  ProfileGoalChanged(goalSleep: newValue),
+                );
+              }
+              FocusScope.of(context).unfocus();
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Mục tiêu Calo tiêu thụ
+          TextFormField(
+            controller: goalCaloriesBurntController,
+            decoration: const InputDecoration(
+              labelText: 'Mục tiêu Calo vận động',
+              suffixText: 'kcal',
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onEditingComplete: () {
+              final newValue = int.tryParse(goalCaloriesBurntController.text);
+              if (newValue != null && newValue != profile.goalCaloriesBurnt) {
+                context.read<ProfileBloc>().add(
+                  ProfileGoalChanged(goalCaloriesBurnt: newValue),
+                );
+              }
+              FocusScope.of(context).unfocus();
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Mục tiêu Calo nạp vào
+          TextFormField(
+            controller: goalCaloriesConsumedController,
+            decoration: const InputDecoration(
+              labelText: 'Mục tiêu Calo nạp vào',
+              suffixText: 'kcal',
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onEditingComplete: () {
+              final newValue = int.tryParse(
+                goalCaloriesConsumedController.text,
+              );
+              if (newValue != null &&
+                  newValue != profile.goalCaloriesConsumed) {
+                context.read<ProfileBloc>().add(
+                  ProfileGoalChanged(goalCaloriesConsumed: newValue),
+                );
+              }
+              FocusScope.of(context).unfocus();
+            },
+          ),
+          const SizedBox(height: 24),
           const Divider(thickness: 1, height: 32),
 
           TextFormField(

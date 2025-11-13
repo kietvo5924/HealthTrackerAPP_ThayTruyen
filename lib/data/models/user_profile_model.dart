@@ -13,6 +13,11 @@ class UserProfileModel extends UserProfile {
     super.allergies,
     required super.remindWater,
     required super.remindSleep,
+    required super.goalSteps,
+    required super.goalWater,
+    required super.goalSleep,
+    required super.goalCaloriesBurnt,
+    required super.goalCaloriesConsumed,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +35,11 @@ class UserProfileModel extends UserProfile {
       allergies: json['allergies'],
       remindWater: json['remindWater'] ?? true,
       remindSleep: json['remindSleep'] ?? true,
+      goalSteps: json['goalSteps'] ?? 10000,
+      goalWater: (json['goalWater'] as num?)?.toDouble() ?? 2.5,
+      goalSleep: (json['goalSleep'] as num?)?.toDouble() ?? 8.0,
+      goalCaloriesBurnt: json['goalCaloriesBurnt'] ?? 500,
+      goalCaloriesConsumed: json['goalCaloriesConsumed'] ?? 2000,
     );
   }
 
