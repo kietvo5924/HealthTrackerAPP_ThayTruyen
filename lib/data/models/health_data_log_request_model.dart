@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 class HealthDataLogRequestModel {
   final String date;
   final int? steps;
-  final double? caloriesBurnt;
   final double? sleepHours;
   final double? waterIntake;
   final double? weight;
@@ -12,7 +11,6 @@ class HealthDataLogRequestModel {
   HealthDataLogRequestModel({
     required this.date,
     this.steps,
-    this.caloriesBurnt,
     this.sleepHours,
     this.waterIntake,
     this.weight,
@@ -23,7 +21,6 @@ class HealthDataLogRequestModel {
     return HealthDataLogRequestModel(
       date: DateFormat('yyyy-MM-dd').format(entity.date),
       steps: entity.steps,
-      caloriesBurnt: entity.caloriesBurnt,
       sleepHours: entity.sleepHours,
       waterIntake: entity.waterIntake,
       weight: entity.weight,
@@ -35,7 +32,6 @@ class HealthDataLogRequestModel {
     final Map<String, dynamic> data = {'date': date};
     // Chỉ thêm vào JSON nếu giá trị không null
     if (steps != null) data['steps'] = steps;
-    if (caloriesBurnt != null) data['caloriesBurnt'] = caloriesBurnt;
     if (sleepHours != null) data['sleepHours'] = sleepHours;
     if (waterIntake != null) data['waterIntake'] = waterIntake;
     if (weight != null) data['weight'] = weight;

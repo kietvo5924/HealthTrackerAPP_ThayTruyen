@@ -67,15 +67,21 @@ class HealthDataRemoteDataSourceImpl implements HealthDataRemoteDataSource {
         data: requestModel.toJson(),
       );
 
-      if (response.statusCode == 200) {
+      final code = response.statusCode ?? 0;
+      // Chấp nhận mọi mã 2xx là thành công (200, 201, 204...)
+      if (code >= 200 && code < 300) {
+        // Nếu backend không trả body, gọi GET để lấy dữ liệu mới nhất
+        if (response.data == null || response.data == "") {
+          return await getHealthData(healthData.date);
+        }
         // 3. Trả về HealthDataModel đã cập nhật
         return HealthDataModel.fromJson(response.data);
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          message: 'Ghi dữ liệu thất bại',
-        );
       }
+
+      throw DioException(
+        requestOptions: response.requestOptions,
+        message: 'Ghi dữ liệu thất bại',
+      );
     } on DioException catch (e) {
       final errorMessage = e.response?.data?['message'] ?? 'Lỗi không xác định';
       throw DioException(

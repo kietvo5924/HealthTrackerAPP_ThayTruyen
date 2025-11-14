@@ -18,6 +18,7 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
 
   StreamSubscription<StepCount>? _stepCountSubscription;
   int _initialSteps = 0;
+  int _lastSavedSteps = 0; // mốc để autosave theo ngưỡng 20 bước
 
   HealthDataBloc({
     required GetHealthDataUseCase getHealthDataUseCase,
@@ -67,6 +68,9 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
             healthData: healthData,
           ),
         );
+
+        // Cập nhật mốc autosave theo dữ liệu đã lưu trên server
+        _lastSavedSteps = healthData.steps ?? 0;
 
         add(HealthDataStepSensorStarted());
       },
@@ -261,6 +265,37 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
     HealthDataStepSensorUpdated event, // Đổi tên từ _HealthData...
     Emitter<HealthDataState> emit,
   ) {
+    // Chỉ xử lý autosave cho ngày hôm nay
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(
+      state.healthData.date.year,
+      state.healthData.date.month,
+      state.healthData.date.day,
+    );
+
+    if (selected != today) {
+      // Vẫn cập nhật UI nhưng không autosave
+      if (event.steps > (state.healthData.steps ?? 0)) {
+        final updatedData = HealthDataModel(
+          id: state.healthData.id,
+          date: state.healthData.date,
+          steps: event.steps, // Cập nhật
+          caloriesBurnt: state.healthData.caloriesBurnt,
+          sleepHours: state.healthData.sleepHours,
+          waterIntake: state.healthData.waterIntake,
+          weight: state.healthData.weight,
+        );
+        emit(
+          state.copyWith(
+            healthData: updatedData,
+            status: HealthDataStatus.success, // Cập nhật UI
+          ),
+        );
+      }
+      return;
+    }
+
     if (event.steps > (state.healthData.steps ?? 0)) {
       final updatedData = HealthDataModel(
         id: state.healthData.id,
@@ -278,9 +313,10 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
         ),
       );
 
-      // --- THÊM MỚI: Tự động lưu ---
-      // Lưu vào CSDL mỗi khi đi được 20 bước mới
-      if (event.steps % 20 == 0) {
+      // --- THÊM MỚI: Tự động lưu theo ngưỡng ---
+      // Lưu vào CSDL mỗi khi tăng thêm >= 20 bước kể từ lần lưu gần nhất
+      if (event.steps - _lastSavedSteps >= 20) {
+        _lastSavedSteps = event.steps;
         add(HealthDataStepsSaved());
       }
       // --- KẾT THÚC THÊM MỚI ---
@@ -308,6 +344,7 @@ class HealthDataBloc extends Bloc<HealthDataEvent, HealthDataState> {
         // ignore: avoid_print
         print('Đã lưu bước đi thành công.');
         emit(state.copyWith(healthData: updatedHealthData));
+        _lastSavedSteps = updatedHealthData.steps ?? _lastSavedSteps;
       },
     );
   }
