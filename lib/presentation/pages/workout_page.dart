@@ -1,12 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
+import 'package:health_tracker_app/presentation/bloc/tracking/tracking_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/feed_page.dart';
 import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:intl/intl.dart';
 import 'package:health_tracker_app/presentation/pages/add_workout_page.dart';
 import 'package:health_tracker_app/presentation/pages/tracking_page.dart';
+import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
+
+String _getVietnameseWorkoutType(WorkoutType type) {
+  switch (type) {
+    case WorkoutType.RUNNING:
+      return 'Chạy bộ';
+    case WorkoutType.WALKING:
+      return 'Đi bộ';
+    case WorkoutType.CYCLING:
+      return 'Đạp xe';
+    case WorkoutType.SWIMMING:
+      return 'Bơi lội';
+    case WorkoutType.GYM:
+      return 'Tập gym';
+    default:
+      return 'Khác';
+  }
+}
 
 class WorkoutPage extends StatelessWidget {
   const WorkoutPage({super.key});
@@ -80,7 +100,7 @@ class WorkoutPage extends StatelessWidget {
   }
 
   void _showAddWorkoutOptions(BuildContext pageContext) {
-    // pageContext là context của trang WorkoutPage, có chứa WorkoutBloc
+    // pageContext là context của trang WorkoutPage, có chứa CÁC BLOC TỪ MAIN
     showModalBottomSheet(
       context: pageContext,
       builder: (sheetContext) {
@@ -94,8 +114,17 @@ class WorkoutPage extends StatelessWidget {
                   Navigator.of(sheetContext).pop(); // Đóng BottomSheet
                   Navigator.of(pageContext).push(
                     MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: BlocProvider.of<WorkoutBloc>(pageContext),
+                      // Truyền cả 2 BLoC
+                      builder: (_) => MultiBlocProvider(
+                        providers: [
+                          BlocProvider.value(
+                            value: BlocProvider.of<WorkoutBloc>(pageContext),
+                          ),
+                          BlocProvider.value(
+                            value: BlocProvider.of<HealthDataBloc>(pageContext),
+                          ),
+                          BlocProvider(create: (context) => sl<TrackingBloc>()),
+                        ],
                         child: const TrackingPage(),
                       ),
                     ),
@@ -109,11 +138,20 @@ class WorkoutPage extends StatelessWidget {
                   Navigator.of(sheetContext).pop(); // Đóng BottomSheet
                   Navigator.of(pageContext).push(
                     MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: BlocProvider.of<WorkoutBloc>(pageContext),
-                        // Mở trang AddWorkoutPage
+                      // === SỬA LẠI CHỖ NÀY (Sửa lỗi ProviderNotFound) ===
+                      // Truyền cả WorkoutBloc và HealthDataBloc vào AddWorkoutPage
+                      builder: (_) => MultiBlocProvider(
+                        providers: [
+                          BlocProvider.value(
+                            value: BlocProvider.of<WorkoutBloc>(pageContext),
+                          ),
+                          BlocProvider.value(
+                            value: BlocProvider.of<HealthDataBloc>(pageContext),
+                          ),
+                        ],
                         child: const AddWorkoutPage(),
                       ),
+                      // === KẾT THÚC SỬA ===
                     ),
                   );
                 },
@@ -202,13 +240,13 @@ class _WorkoutListTile extends StatelessWidget {
           color: Theme.of(context).primaryColor,
         ),
         title: Text(
-          // Chuyển "RUNNING" thành "Running"
-          workout.workoutType.toString().split('.').last.capitalize(),
+          // === SỬA LẠI TÊN TIẾNG VIỆT ===
+          _getVietnameseWorkoutType(workout.workoutType),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
           // Hiển thị ngày và giờ
-          DateFormat.yMd().add_Hm().format(workout.startedAt.toLocal()),
+          DateFormat.yMd('vi_VN').add_Hm().format(workout.startedAt.toLocal()),
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_tracker_app/core/utils/string_extensions.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:intl/intl.dart';
+
+String _getVietnameseWorkoutType(WorkoutType type) {
+  switch (type) {
+    case WorkoutType.RUNNING:
+      return 'Chạy bộ';
+    case WorkoutType.WALKING:
+      return 'Đi bộ';
+    case WorkoutType.CYCLING:
+      return 'Đạp xe';
+    case WorkoutType.SWIMMING:
+      return 'Bơi lội';
+    case WorkoutType.GYM:
+      return 'Tập gym';
+    default:
+      return 'Khác';
+  }
+}
 
 class WorkoutFeedTile extends StatelessWidget {
   final Workout workout;
@@ -37,11 +53,7 @@ class WorkoutFeedTile extends StatelessWidget {
 
   // Helper để tạo tiêu đề
   String _buildTitle() {
-    String activity = workout.workoutType
-        .toString()
-        .split('.')
-        .last
-        .capitalize();
+    String activity = _getVietnameseWorkoutType(workout.workoutType);
 
     if (workout.distanceInKm != null && workout.distanceInKm! > 0) {
       return '$activity - ${workout.distanceInKm!.toStringAsFixed(2)} km';

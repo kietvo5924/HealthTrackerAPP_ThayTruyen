@@ -13,6 +13,7 @@ import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/domain/entities/user_profile.dart';
+import 'package:health_tracker_app/core/di/service_locator.dart';
 
 // Hàm này sẽ trả về "Hôm nay", "Hôm qua", hoặc "dd/MM/yyyy"
 String _buildTitle(DateTime date) {
@@ -112,7 +113,11 @@ class HomePage extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
+                      builder: (context) => BlocProvider<ProfileBloc>(
+                        create: (context) =>
+                            sl<ProfileBloc>()..add(ProfileFetched()),
+                        child: const ProfilePage(),
+                      ),
                     ),
                   );
                 },
@@ -180,19 +185,20 @@ class HealthDataDashboard extends StatelessWidget {
   const HealthDataDashboard({
     super.key,
     required this.healthData,
-    // === THÊM VÀO CONSTRUCTOR ===
     required this.goalSteps,
     required this.goalWater,
     required this.goalSleep,
     required this.goalCaloriesBurnt,
   });
 
-  // (Xóa 4 dòng "final int stepGoal = 8000;"...)
-
   @override
   Widget build(BuildContext context) {
-    // === SỬA LẠI TÍNH TOÁN (dùng biến `goal...` thay vì `stepGoal`...) ===
-    // Thêm `> 0 ? ... : 1` để tránh lỗi chia cho 0 nếu mục tiêu là 0
+    double _toKcal(double? value) {
+      final v = value ?? 0;
+      // Điều chỉnh quy mô: nếu giá trị quá lớn (vd 50,000) thì chia 10 để ~5,000
+      return v > 10000 ? v / 10 : v;
+    }
+
     final double stepProgress =
         (healthData.steps ?? 0) / (goalSteps > 0 ? goalSteps : 1);
     final double waterProgress =
@@ -200,7 +206,7 @@ class HealthDataDashboard extends StatelessWidget {
     final double sleepProgress =
         (healthData.sleepHours ?? 0) / (goalSleep > 0 ? goalSleep : 1);
     final double caloriesProgress =
-        (healthData.caloriesBurnt ?? 0) /
+        _toKcal(healthData.caloriesBurnt) /
         (goalCaloriesBurnt > 0 ? goalCaloriesBurnt : 1);
 
     // --- SỬA ĐỔI: Kiểm tra xem có phải hôm nay không ---
@@ -335,36 +341,18 @@ class HealthDataDashboard extends StatelessWidget {
               CircularHealthTile(
                 label: 'Calo tiêu thụ',
                 icon: Icons.local_fire_department_outlined,
-                value: healthData.caloriesBurnt?.toString() ?? '0',
+                value: _toKcal(healthData.caloriesBurnt).toInt().toString(),
                 unit: '/ $goalCaloriesBurnt kcal', // <-- SỬA
                 progress: caloriesProgress > 1.0 ? 1.0 : caloriesProgress,
                 progressColor: Colors.red,
                 onTap: () {
-                  // (Logic onTap không đổi)
-                  if (!isToday) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Chỉ có thể nhập dữ liệu cho ngày hôm nay.',
-                        ),
+                  // Tắt nhập tay
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Calo được tự động cập nhật từ các bài tập đã lưu.',
                       ),
-                    );
-                    return;
-                  }
-                  _showLogDialog(
-                    context,
-                    title: 'Nhập calo tiêu thụ',
-                    label: 'Số calo (kcal)',
-                    initialValue: healthData.caloriesBurnt?.toString(),
-                    onSave: (value) {
-                      final double? calories = double.tryParse(value);
-                      if (calories != null) {
-                        context.read<HealthDataBloc>().add(
-                          HealthDataCaloriesChanged(calories),
-                        );
-                        context.read<HealthDataBloc>().add(HealthDataLogged());
-                      }
-                    },
+                    ),
                   );
                 },
               ),
@@ -545,95 +533,117 @@ class _CalorieSummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 // 1. Calo Nạp vào (từ NutritionBloc)
-                BlocBuilder<NutritionBloc, NutritionState>(
-                  builder: (context, state) {
-                    if (state.status == NutritionStatus.loading) {
-                      return const _StatTile(
-                        label: 'Nạp vào',
-                        value: '...',
-                        unit: 'kcal',
-                      );
-                    }
-                    final caloriesIn = state.meals.fold<double>(
-                      0.0,
-                      (sum, meal) => sum + meal.totalMealCalories,
-                    );
-                    return _StatTile(
-                      label: 'Nạp vào',
-                      value: caloriesIn.toInt().toString(),
-                      // === SỬA MỤC TIÊU CỨNG ===
-                      unit: '/ $goalCaloriesConsumed kcal',
-                    );
-                  },
-                ),
-
-                const Text(
-                  '-',
-                  style: TextStyle(fontSize: 24, color: Colors.grey),
-                ),
-
-                // 2. Calo Tiêu thụ (từ HealthDataBloc)
-                BlocBuilder<HealthDataBloc, HealthDataState>(
-                  builder: (context, state) {
-                    final caloriesOut = state.healthData.caloriesBurnt ?? 0;
-                    return _StatTile(
-                      label: 'Tiêu thụ',
-                      value: caloriesOut.toInt().toString(),
-                      unit: 'kcal',
-                    );
-                  },
-                ),
-
-                const Text(
-                  '=',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-
-                // 3. Kết quả (Thâm hụt/Dư thừa)
-                MultiBlocListener(
-                  listeners: [
-                    BlocListener<NutritionBloc, NutritionState>(
-                      listener: (context, state) {},
-                    ),
-                    BlocListener<HealthDataBloc, HealthDataState>(
-                      listener: (context, state) {},
-                    ),
-                  ],
-                  child: Builder(
-                    builder: (context) {
-                      // Lấy state một cách an toàn
-                      final nutritionState = context
-                          .watch<NutritionBloc>()
-                          .state;
-                      final healthState = context.watch<HealthDataBloc>().state;
-
-                      final caloriesIn = nutritionState.meals.fold<double>(
+                Expanded(
+                  child: BlocBuilder<NutritionBloc, NutritionState>(
+                    builder: (context, state) {
+                      if (state.status == NutritionStatus.loading) {
+                        return const _StatTile(
+                          label: 'Nạp vào',
+                          value: '...',
+                          unit: 'kcal',
+                        );
+                      }
+                      final caloriesIn = state.meals.fold<double>(
                         0.0,
                         (sum, meal) => sum + meal.totalMealCalories,
                       );
-                      final caloriesOut =
-                          healthState.healthData.caloriesBurnt ?? 0;
-
-                      // === SỬA LOGIC TÍNH TOÁN CÒN LẠI ===
-                      // (Calo nạp vào - Calo mục tiêu) + (Calo vận động)
-                      // Logic đúng: Calo mục tiêu - (Calo nạp vào - Calo vận động)
-                      // Logic đơn giản: (Calo nạp vào - Calo vận động)
-                      final netCalories = caloriesIn - caloriesOut;
-
-                      // So sánh với mục tiêu nạp vào
-                      final remaining = goalCaloriesConsumed - netCalories;
-
                       return _StatTile(
-                        // Sửa logic hiển thị
-                        label: 'Còn lại',
-                        value: remaining.toInt().toString(),
-                        unit: 'kcal',
-                        valueColor: remaining > 0 ? Colors.green : Colors.red,
+                        label: 'Nạp vào',
+                        value: caloriesIn.toInt().toString(),
+                        unit: '/ $goalCaloriesConsumed kcal',
                       );
                     },
+                  ),
+                ),
+
+                // Dấu trừ giữa Nạp vào và Tiêu thụ
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    '-',
+                    style: TextStyle(fontSize: 20, color: Colors.grey),
+                  ),
+                ),
+
+                // 2. Calo Tiêu thụ (từ HealthDataBloc)
+                Expanded(
+                  child: BlocBuilder<HealthDataBloc, HealthDataState>(
+                    builder: (context, state) {
+                      double _toKcal(double? value) {
+                        final v = value ?? 0;
+                        return v > 10000 ? v / 10 : v;
+                      }
+
+                      final caloriesOut = _toKcal(
+                        state.healthData.caloriesBurnt,
+                      );
+                      return _StatTile(
+                        label: 'Tiêu thụ',
+                        value: caloriesOut.toInt().toString(),
+                        unit: 'kcal',
+                      );
+                    },
+                  ),
+                ),
+
+                // Dấu bằng giữa Tiêu thụ và Còn lại
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    '=',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                // 3. Kết quả (Thâm hụt/Dư thừa)
+                Expanded(
+                  child: MultiBlocListener(
+                    listeners: [
+                      BlocListener<NutritionBloc, NutritionState>(
+                        listener: (context, state) {},
+                      ),
+                      BlocListener<HealthDataBloc, HealthDataState>(
+                        listener: (context, state) {},
+                      ),
+                    ],
+                    child: Builder(
+                      builder: (context) {
+                        final nutritionState = context
+                            .watch<NutritionBloc>()
+                            .state;
+                        final healthState = context
+                            .watch<HealthDataBloc>()
+                            .state;
+
+                        final caloriesIn = nutritionState.meals.fold<double>(
+                          0.0,
+                          (sum, meal) => sum + meal.totalMealCalories,
+                        );
+
+                        double _toKcal(double? value) {
+                          final v = value ?? 0;
+                          return v > 10000 ? v / 10 : v;
+                        }
+
+                        final caloriesOut = _toKcal(
+                          healthState.healthData.caloriesBurnt,
+                        );
+                        final double totalGoal =
+                            goalCaloriesConsumed.toDouble() + caloriesOut;
+                        final double remaining = totalGoal - caloriesIn;
+
+                        return _StatTile(
+                          label: 'Còn lại',
+                          value: remaining.toInt().toString(),
+                          unit: 'kcal',
+                          valueColor: remaining >= 0
+                              ? Colors.green
+                              : Colors.red,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -706,16 +716,31 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+          style: const TextStyle(color: Colors.grey, fontSize: 14),
+        ),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: valueColor ?? Colors.black, // Màu mặc định
+            color: valueColor ?? Colors.black,
           ),
         ),
-        Text(unit, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+        Text(
+          unit,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+          style: const TextStyle(color: Colors.grey, fontSize: 14),
+        ),
       ],
     );
   }

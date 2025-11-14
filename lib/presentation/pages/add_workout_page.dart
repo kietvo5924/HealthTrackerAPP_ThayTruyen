@@ -4,6 +4,7 @@ import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
 
 class AddWorkoutPage extends StatefulWidget {
   const AddWorkoutPage({super.key});
@@ -15,13 +16,13 @@ class AddWorkoutPage extends StatefulWidget {
 class _AddWorkoutPageState extends State<AddWorkoutPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Biến cho state của Form
+  // Biến cho state của Form (Giữ nguyên)
   WorkoutType? _selectedType = WorkoutType.RUNNING;
   DateTime _selectedDateTime = DateTime.now();
   final _durationController = TextEditingController();
   final _caloriesController = TextEditingController();
 
-  // Hàm chọn ngày
+  // Hàm chọn ngày (Giữ nguyên)
   Future<void> _pickDateTime() async {
     final date = await showDatePicker(
       context: context,
@@ -49,7 +50,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
     });
   }
 
-  // Hàm Submit
+  // Hàm Submit (Giữ nguyên)
   void _submitForm() {
     // Ẩn bàn phím
     FocusScope.of(context).unfocus();
@@ -80,19 +81,33 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Thêm bài tập')),
       body: BlocListener<WorkoutBloc, WorkoutState>(
+        // === SỬA LẠI LISTENER ===
+        listenWhen: (previous, current) {
+          // Chỉ lắng nghe khi trạng thái 'isSubmitting' thay đổi
+          return previous.isSubmitting != current.isSubmitting;
+        },
         listener: (context, state) {
-          // Lắng nghe khi gửi thành công
-          if (!state.isSubmitting && state.submissionError == null) {
-            // Đóng trang này và quay về
-            Navigator.of(context).pop();
-          }
-          // Lắng nghe khi gửi thất bại
+          // 1. Kiểm tra lỗi TRƯỚC
           if (state.submissionError != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Lỗi: ${state.submissionError}')),
             );
           }
+          // 2. Nếu không có lỗi VÀ 'isSubmitting' vừa chuyển về false -> THÀNH CÔNG
+          else if (!state.isSubmitting) {
+            // 2a. Lấy ngày của bài tập vừa lưu
+            final savedWorkoutDate = _selectedDateTime;
+
+            // 2b. Gọi HealthDataBloc để tải lại dữ liệu cho ngày đó
+            context.read<HealthDataBloc>().add(
+              HealthDataFetched(savedWorkoutDate.toLocal()),
+            );
+
+            // 2c. Đóng trang
+            Navigator.of(context).pop();
+          }
         },
+        // === KẾT THÚC SỬA LISTENER ===
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -100,9 +115,8 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Chọn loại bài tập
+                // 1. Chọn loại bài tập (Giữ nguyên)
                 DropdownButtonFormField<WorkoutType>(
-                  // ignore: deprecated_member_use
                   value: _selectedType,
                   decoration: const InputDecoration(
                     labelText: 'Loại bài tập',
@@ -122,7 +136,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // 2. Chọn ngày giờ
+                // 2. Chọn ngày giờ (Giữ nguyên)
                 TextFormField(
                   readOnly: true,
                   decoration: InputDecoration(
@@ -130,9 +144,9 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
                     border: const OutlineInputBorder(),
                     suffixIcon: const Icon(Icons.calendar_month),
                   ),
-                  // Hiển thị ngày giờ đã chọn
                   controller: TextEditingController(
-                    text: DateFormat.yMd().add_Hm().format(
+                    text: DateFormat.yMd('vi_VN').add_Hm().format(
+                      // Thêm 'vi_VN'
                       _selectedDateTime.toLocal(),
                     ),
                   ),
@@ -140,7 +154,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // 3. Nhập thời lượng
+                // 3. Nhập thời lượng (Giữ nguyên)
                 TextFormField(
                   controller: _durationController,
                   decoration: const InputDecoration(
@@ -160,7 +174,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // 4. Nhập Calo
+                // 4. Nhập Calo (Giữ nguyên)
                 TextFormField(
                   controller: _caloriesController,
                   decoration: const InputDecoration(
@@ -171,7 +185,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
                 ),
                 const SizedBox(height: 32),
 
-                // 5. Nút Lưu
+                // 5. Nút Lưu (Giữ nguyên)
                 BlocBuilder<WorkoutBloc, WorkoutState>(
                   builder: (context, state) {
                     return state.isSubmitting
@@ -194,8 +208,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
   }
 }
 
-// (Chúng ta đã có extension này ở workout_page.dart,
-// nhưng để ở đây để file này chạy độc lập nếu cần)
+// (Giữ nguyên)
 extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
