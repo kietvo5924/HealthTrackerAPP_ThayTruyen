@@ -7,11 +7,14 @@ abstract class FeedEvent extends Equatable {
   List<Object> get props => [];
 }
 
-// Event để tải bảng tin
+// Sự kiện 1: Tải bảng tin lần đầu (hoặc khi refresh)
 class FeedFetched extends FeedEvent {}
 
+// Sự kiện 2: Cuộn xuống đáy để tải thêm (Phân trang)
+class FeedScrolled extends FeedEvent {}
+
+// Sự kiện 3: Bấm Like một bài tập
 class FeedWorkoutLiked extends FeedEvent {
-  // Sửa thành int
   final int workoutId;
   const FeedWorkoutLiked(this.workoutId);
 

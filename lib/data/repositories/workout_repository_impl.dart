@@ -58,14 +58,15 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
   }
 
   @override
-  Future<Either<Failure, List<Workout>>> getCommunityFeed() async {
+  Future<Either<Failure, List<Workout>>> getCommunityFeed(
+    int page,
+    int size,
+  ) async {
     try {
-      final workoutList = await remoteDataSource.getCommunityFeed();
-      return Right(workoutList);
+      final workouts = await remoteDataSource.getCommunityFeed(page, size);
+      return Right(workouts);
     } on DioException catch (e) {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));
-    } catch (e) {
-      return Left(GenericFailure(e.toString()));
     }
   }
 

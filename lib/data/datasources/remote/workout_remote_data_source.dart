@@ -7,7 +7,7 @@ import 'package:health_tracker_app/data/models/workout_summary_model.dart';
 abstract class WorkoutRemoteDataSource {
   Future<List<WorkoutModel>> getMyWorkouts();
   Future<WorkoutModel> logWorkout(LogWorkoutRequestModel request);
-  Future<List<WorkoutModel>> getCommunityFeed();
+  Future<List<WorkoutModel>> getCommunityFeed(int page, int size);
   Future<WorkoutModel> toggleWorkoutLike(int workoutId);
   Future<List<WorkoutCommentModel>> getComments(int workoutId);
   Future<WorkoutCommentModel> addComment({
@@ -77,28 +77,23 @@ class WorkoutRemoteDataSourceImpl implements WorkoutRemoteDataSource {
   }
 
   @override
-  Future<List<WorkoutModel>> getCommunityFeed() async {
+  Future<List<WorkoutModel>> getCommunityFeed(int page, int size) async {
     try {
-      // 1. Gọi API GET /api/workouts/feed
-      final response = await dio.get('/workouts/feed');
-
+      final response = await dio.get(
+        '/workouts/feed',
+        queryParameters: {'page': page, 'size': size},
+      );
       if (response.statusCode == 200) {
-        // 2. Chuyển đổi List<dynamic> (JSON) thành List<WorkoutModel>
-        return (response.data as List)
-            .map((json) => WorkoutModel.fromJson(json))
-            .toList();
+        final List<dynamic> data = response.data;
+        return data.map((json) => WorkoutModel.fromJson(json)).toList();
       } else {
         throw DioException(
           requestOptions: response.requestOptions,
-          message: 'Lấy Bảng tin thất bại',
+          message: 'Lấy feed thất bại',
         );
       }
-    } on DioException catch (e) {
-      final errorMessage = e.response?.data?['message'] ?? 'Lỗi không xác định';
-      throw DioException(
-        requestOptions: e.requestOptions,
-        message: errorMessage,
-      );
+    } on DioException {
+      rethrow;
     }
   }
 

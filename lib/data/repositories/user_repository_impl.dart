@@ -82,4 +82,35 @@ class UserRepositoryImpl implements UserRepository {
       return Left(ServerFailure(e.message ?? 'Lỗi server'));
     }
   }
+
+  // --- SOCIAL IMPLEMENTATION ---
+  @override
+  Future<Either<Failure, List<UserProfile>>> searchUsers(String query) async {
+    try {
+      final users = await remoteDataSource.searchUsers(query);
+      return Right(users);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> followUser(int userId) async {
+    try {
+      await remoteDataSource.followUser(userId);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> unfollowUser(int userId) async {
+    try {
+      await remoteDataSource.unfollowUser(userId);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi server'));
+    }
+  }
 }

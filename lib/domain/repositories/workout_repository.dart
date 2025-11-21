@@ -18,7 +18,7 @@ abstract class WorkoutRepository {
     String? routePolyline,
   });
 
-  Future<Either<Failure, List<Workout>>> getCommunityFeed();
+  Future<Either<Failure, List<Workout>>> getCommunityFeed(int page, int size);
 
   Future<Either<Failure, Workout>> toggleWorkoutLike(int workoutId);
 

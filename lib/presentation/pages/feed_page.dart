@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/core/di/service_locator.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
+import 'package:health_tracker_app/presentation/pages/search_user_page.dart'; // Import trang tìm kiếm
 import 'package:health_tracker_app/presentation/pages/workout_detail_page.dart';
 import 'package:health_tracker_app/presentation/widgets/workout_feed_tile.dart';
 
@@ -14,10 +15,24 @@ class FeedPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => sl<FeedBloc>()..add(FeedFetched()),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Bảng tin')),
+        appBar: AppBar(
+          title: const Text('Bảng tin'),
+          actions: [
+            // --- THÊM NÚT TÌM KIẾM ---
+            IconButton(
+              icon: const Icon(Icons.person_add_alt_1),
+              tooltip: 'Tìm bạn bè',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SearchUserPage()),
+                );
+              },
+            ),
+            // -------------------------
+          ],
+        ),
         body: BlocBuilder<FeedBloc, FeedState>(
           builder: (context, state) {
-            // Trạng thái Lỗi
             if (state.status == FeedStatus.failure) {
               return Center(
                 child: Column(
@@ -36,36 +51,39 @@ class FeedPage extends StatelessWidget {
               );
             }
 
-            // Trạng thái Tải
             if (state.status == FeedStatus.loading ||
                 state.status == FeedStatus.initial) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Trạng thái Rỗng
             if (state.status == FeedStatus.success && state.workouts.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      'Chưa có hoạt động nào trong cộng đồng.',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                      'Chưa có hoạt động nào.\nHãy follow thêm bạn bè!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
+                    const SizedBox(height: 16),
+                    // Nút gợi ý tìm bạn
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.search),
+                      label: const Text('Tìm bạn bè ngay'),
                       onPressed: () {
-                        context.read<FeedBloc>().add(FeedFetched());
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SearchUserPage(),
+                          ),
+                        );
                       },
-                      child: const Text('Tải lại'),
                     ),
                   ],
                 ),
               );
             }
 
-            // Trạng thái Thành công (có dữ liệu)
-            // Thêm RefreshIndicator
             return RefreshIndicator(
               onRefresh: () async {
                 context.read<FeedBloc>().add(FeedFetched());
@@ -74,15 +92,12 @@ class FeedPage extends StatelessWidget {
                 itemCount: state.workouts.length,
                 itemBuilder: (context, index) {
                   final workout = state.workouts[index];
-                  // Dùng widget mới
                   return WorkoutFeedTile(
                     workout: workout,
                     onTap: () {
-                      // Mở trang chi tiết khi nhấn vào
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => BlocProvider.value(
-                            // Lấy WorkoutBloc từ context của MainShellPage
                             value: context.read<WorkoutBloc>(),
                             child: WorkoutDetailPage(workout: workout),
                           ),

@@ -16,4 +16,8 @@ abstract class UserRepository {
   Future<Either<Failure, UserProfile>> updateUserGoals(
     UserGoalsRequestModel goals,
   );
+
+  Future<Either<Failure, List<UserProfile>>> searchUsers(String query);
+  Future<Either<Failure, void>> followUser(int userId);
+  Future<Either<Failure, void>> unfollowUser(int userId);
 }

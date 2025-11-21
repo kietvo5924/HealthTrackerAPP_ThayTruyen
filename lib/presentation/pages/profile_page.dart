@@ -107,6 +107,23 @@ class ProfileForm extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildStatColumn('Đang theo dõi', profile.followingCount),
+                Container(
+                  height: 30,
+                  width: 1,
+                  color: Colors.grey.shade300,
+                  margin: const EdgeInsets.symmetric(horizontal: 30),
+                ),
+                _buildStatColumn('Người theo dõi', profile.followersCount),
+              ],
+            ),
+          ),
+          const Divider(),
           TextFormField(
             initialValue: profile.email,
             decoration: const InputDecoration(
@@ -361,6 +378,23 @@ class ProfileForm extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // Helper widget cho thống kê
+  Widget _buildStatColumn(String label, int count) {
+    return Column(
+      children: [
+        Text(
+          count.toString(),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+        ),
+      ],
     );
   }
 }

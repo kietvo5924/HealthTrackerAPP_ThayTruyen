@@ -17,6 +17,8 @@ class UserProfile extends Equatable {
   final double goalSleep;
   final int goalCaloriesBurnt;
   final int goalCaloriesConsumed;
+  final int followersCount;
+  final int followingCount;
 
   const UserProfile({
     required this.id,
@@ -35,6 +37,8 @@ class UserProfile extends Equatable {
     required this.goalSleep,
     required this.goalCaloriesBurnt,
     required this.goalCaloriesConsumed,
+    this.followersCount = 0,
+    this.followingCount = 0,
   });
 
   @override
@@ -55,5 +59,7 @@ class UserProfile extends Equatable {
     goalSleep,
     goalCaloriesBurnt,
     goalCaloriesConsumed,
+    followersCount,
+    followingCount,
   ];
 }

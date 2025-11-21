@@ -46,6 +46,7 @@ import 'package:health_tracker_app/presentation/bloc/health_data/health_data_blo
 import 'package:health_tracker_app/presentation/bloc/login/login_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/signup/signup_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/social/social_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/statistics/statistics_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/tracking/tracking_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
@@ -207,6 +208,8 @@ Future<void> init() async {
       createFoodUseCase: sl(), // Thêm
     ),
   );
+
+  sl.registerFactory<SocialBloc>(() => SocialBloc(userRepository: sl()));
 
   // ### Services ###
   sl.registerLazySingleton(() => NotificationService(sl(), sl()));
