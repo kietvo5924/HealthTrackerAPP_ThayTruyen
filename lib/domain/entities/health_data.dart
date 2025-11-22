@@ -8,6 +8,7 @@ class HealthData extends Equatable {
   final double? sleepHours;
   final double? waterIntake;
   final double? weight;
+  final int? dailyScore;
 
   const HealthData({
     this.id,
@@ -17,6 +18,7 @@ class HealthData extends Equatable {
     this.sleepHours,
     this.waterIntake,
     this.weight,
+    this.dailyScore,
   });
 
   // Một factory để tạo đối tượng rỗng cho ngày hôm nay
@@ -33,5 +35,6 @@ class HealthData extends Equatable {
     sleepHours,
     waterIntake,
     weight,
+    dailyScore,
   ];
 }

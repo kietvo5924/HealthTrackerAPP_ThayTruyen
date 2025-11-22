@@ -278,6 +278,11 @@ class HealthDataDashboard extends StatelessWidget {
               const _CalorieSummaryCard(),
               const SizedBox(height: 20),
 
+              HealthScoreCard(
+                // Lấy điểm từ healthData, nếu null thì là 0
+                score: healthData.dailyScore ?? 0,
+              ),
+
               // 1. Bước đi
               CircularHealthTile(
                 label: 'Bước đi',
@@ -790,6 +795,104 @@ class _StatTile extends StatelessWidget {
           style: const TextStyle(color: Colors.grey, fontSize: 14),
         ),
       ],
+    );
+  }
+}
+
+class HealthScoreCard extends StatelessWidget {
+  final int score;
+
+  const HealthScoreCard({super.key, required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    // Logic màu sắc giữ nguyên
+    Color scoreColor = Colors.red;
+    String message = "Cần cố gắng!";
+    if (score >= 50) {
+      scoreColor = Colors.orange;
+      message = "Khá tốt!";
+    }
+    if (score >= 80) {
+      scoreColor = Colors.green;
+      message = "Tuyệt vời!";
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 70,
+            height: 70,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: CircularProgressIndicator(
+                    value: score / 100,
+                    strokeWidth: 10,
+                    backgroundColor: Colors.grey[100],
+                    valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Text(
+                  "$score",
+                  style: TextStyle(
+                    fontSize: 28, // Tăng cỡ chữ số điểm
+                    fontWeight: FontWeight.bold,
+                    color: scoreColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 20),
+          // Lời nhắn bên cạnh
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Điểm sức khỏe",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Cập nhật theo thời gian thực",
+                  style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

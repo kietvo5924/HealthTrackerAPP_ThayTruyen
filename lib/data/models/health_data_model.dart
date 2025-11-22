@@ -9,6 +9,7 @@ class HealthDataModel extends HealthData {
     super.sleepHours,
     super.waterIntake,
     super.weight,
+    super.dailyScore,
   });
 
   factory HealthDataModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,7 @@ class HealthDataModel extends HealthData {
       sleepHours: json['sleepHours']?.toDouble(),
       waterIntake: json['waterIntake']?.toDouble(),
       weight: json['weight']?.toDouble(),
+      dailyScore: json['dailyScore'],
     );
   }
 }
