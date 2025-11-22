@@ -19,6 +19,7 @@ class UserProfile extends Equatable {
   final int goalCaloriesConsumed;
   final int followersCount;
   final int followingCount;
+  final bool isFollowing;
 
   const UserProfile({
     required this.id,
@@ -39,7 +40,52 @@ class UserProfile extends Equatable {
     required this.goalCaloriesConsumed,
     this.followersCount = 0,
     this.followingCount = 0,
+    this.isFollowing = false,
   });
+
+  UserProfile copyWith({
+    int? id,
+    String? fullName,
+    String? email,
+    String? phoneNumber,
+    String? role,
+    DateTime? dateOfBirth,
+    String? address,
+    String? medicalHistory,
+    String? allergies,
+    bool? remindWater,
+    bool? remindSleep,
+    int? goalSteps,
+    double? goalWater,
+    double? goalSleep,
+    int? goalCaloriesBurnt,
+    int? goalCaloriesConsumed,
+    int? followersCount,
+    int? followingCount,
+    bool? isFollowing,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      role: role ?? this.role,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      address: address ?? this.address,
+      medicalHistory: medicalHistory ?? this.medicalHistory,
+      allergies: allergies ?? this.allergies,
+      remindWater: remindWater ?? this.remindWater,
+      remindSleep: remindSleep ?? this.remindSleep,
+      goalSteps: goalSteps ?? this.goalSteps,
+      goalWater: goalWater ?? this.goalWater,
+      goalSleep: goalSleep ?? this.goalSleep,
+      goalCaloriesBurnt: goalCaloriesBurnt ?? this.goalCaloriesBurnt,
+      goalCaloriesConsumed: goalCaloriesConsumed ?? this.goalCaloriesConsumed,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
+      isFollowing: isFollowing ?? this.isFollowing,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -61,5 +107,6 @@ class UserProfile extends Equatable {
     goalCaloriesConsumed,
     followersCount,
     followingCount,
+    isFollowing,
   ];
 }

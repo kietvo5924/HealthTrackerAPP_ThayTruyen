@@ -20,6 +20,7 @@ class UserProfileModel extends UserProfile {
     required super.goalCaloriesConsumed,
     super.followersCount,
     super.followingCount,
+    super.isFollowing,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +45,7 @@ class UserProfileModel extends UserProfile {
       goalCaloriesConsumed: json['goalCaloriesConsumed'] ?? 2000,
       followersCount: json['followersCount'] ?? 0,
       followingCount: json['followingCount'] ?? 0,
+      isFollowing: json['isFollowing'] ?? false,
     );
   }
 

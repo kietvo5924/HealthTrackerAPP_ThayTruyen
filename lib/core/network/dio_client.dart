@@ -6,7 +6,7 @@ class DioClient {
   final SharedPreferences sharedPreferences;
 
   // Base URL của API Spring Boot của bạn
-  static const String _baseUrl = "http://192.168.1.3:8080/api";
+  static const String _baseUrl = "http://192.168.1.7:8080/api";
 
   DioClient(this.dio, this.sharedPreferences) {
     dio

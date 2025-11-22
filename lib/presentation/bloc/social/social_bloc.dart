@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:stream_transform/stream_transform.dart'; // Helper cho debounce
+import 'package:stream_transform/stream_transform.dart';
 import 'package:health_tracker_app/domain/entities/user_profile.dart';
 import 'package:health_tracker_app/domain/repositories/user_repository.dart';
 
@@ -41,7 +41,6 @@ class SocialBloc extends Bloc<SocialEvent, SocialState> {
     emit(state.copyWith(status: SocialStatus.loading));
 
     // Gọi Repository để tìm kiếm
-    // Lưu ý: Bạn cần đảm bảo UserRepository đã có hàm searchUsers như hướng dẫn trước
     final result = await userRepository.searchUsers(event.query);
 
     result.fold(
@@ -65,18 +64,34 @@ class SocialBloc extends Bloc<SocialEvent, SocialState> {
     SocialFollowUser event,
     Emitter<SocialState> emit,
   ) async {
-    // Đặt trạng thái loading cho user cụ thể
+    // 1. Cập nhật UI NGAY LẬP TỨC (Optimistic Update)
+    // Tạo danh sách mới với user đã được cập nhật trạng thái
+    final updatedList = state.searchResults.map((user) {
+      if (user.id == event.userId) {
+        return user.copyWith(
+          isFollowing: true, // Đánh dấu là đã follow
+          followersCount: user.followersCount + 1, // Tăng số lượng follow ảo
+        );
+      }
+      return user;
+    }).toList();
+
+    // Emit state mới ngay lập tức để giao diện đổi nút
     emit(
       state.copyWith(
+        searchResults: updatedList, // Cập nhật danh sách hiển thị
         followStatus: FollowStatus.loading,
         processingUserId: event.userId,
       ),
     );
 
+    // 2. Gọi API thực tế
     final result = await userRepository.followUser(event.userId);
 
+    // 3. Xử lý kết quả từ Server
     result.fold(
       (failure) {
+        // Nếu API lỗi -> Hoàn tác lại UI hoặc báo lỗi
         emit(
           state.copyWith(
             followStatus: FollowStatus.failure,
@@ -84,22 +99,20 @@ class SocialBloc extends Bloc<SocialEvent, SocialState> {
             processingUserId: null,
           ),
         );
+
+        // Mẹo: Gọi lại search để đồng bộ dữ liệu chính xác từ server nếu cần
+        if (state.searchResults.isNotEmpty) {
+          // add(SocialSearchQueryChanged(...));
+        }
       },
       (success) {
-        // Nếu follow thành công, cập nhật lại danh sách searchResults
-        // (Giả sử UI cần cập nhật trạng thái nút thành "Đang theo dõi")
-        // Ở đây ta có thể load lại list search hoặc update thủ công
-
-        // Cách đơn giản: giữ nguyên list, chỉ báo thành công để UI xử lý
+        // Thành công -> Chỉ cần tắt trạng thái loading
         emit(
           state.copyWith(
             followStatus: FollowStatus.success,
             processingUserId: null,
           ),
         );
-
-        // (Nâng cao) Nếu muốn cập nhật UI ngay lập tức mà không cần load lại:
-        // Bạn có thể clone list searchResults và update trạng thái 'isFollowing' của user đó
       },
     );
   }
@@ -108,13 +121,29 @@ class SocialBloc extends Bloc<SocialEvent, SocialState> {
     SocialUnfollowUser event,
     Emitter<SocialState> emit,
   ) async {
+    // 1. Cập nhật UI NGAY LẬP TỨC (Optimistic Update)
+    final updatedList = state.searchResults.map((user) {
+      if (user.id == event.userId) {
+        return user.copyWith(
+          isFollowing: false, // Đánh dấu là hủy follow
+          followersCount: (user.followersCount - 1) < 0
+              ? 0
+              : user.followersCount - 1,
+        );
+      }
+      return user;
+    }).toList();
+
+    // Emit state mới ngay lập tức
     emit(
       state.copyWith(
+        searchResults: updatedList,
         followStatus: FollowStatus.loading,
         processingUserId: event.userId,
       ),
     );
 
+    // 2. Gọi API thực tế
     final result = await userRepository.unfollowUser(event.userId);
 
     result.fold(

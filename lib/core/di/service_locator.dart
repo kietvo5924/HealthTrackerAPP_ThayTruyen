@@ -5,16 +5,19 @@ import 'package:get_it/get_it.dart';
 import 'package:health_tracker_app/core/network/dio_client.dart';
 import 'package:health_tracker_app/core/services/notification_service.dart';
 import 'package:health_tracker_app/data/datasources/local/auth_local_data_source.dart';
+import 'package:health_tracker_app/data/datasources/remote/achievement_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/auth_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/health_data_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/notification_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/user_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/workout_remote_data_source.dart';
+import 'package:health_tracker_app/data/repositories/achievement_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/auth_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/health_data_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/notification_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/user_repository_impl.dart';
 import 'package:health_tracker_app/data/repositories/workout_repository_impl.dart';
+import 'package:health_tracker_app/domain/repositories/achievement_repository.dart';
 import 'package:health_tracker_app/domain/repositories/auth_repository.dart';
 import 'package:health_tracker_app/domain/repositories/health_data_repository.dart';
 import 'package:health_tracker_app/domain/repositories/notification_repository.dart';
@@ -25,8 +28,11 @@ import 'package:health_tracker_app/domain/usecases/get_auth_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_range_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_health_data_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_my_achievements_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_my_workouts_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_notifications_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_nutrition_summary_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/get_unread_notification_count_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_user_profile_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_workout_comments_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/get_workout_summary_usecase.dart';
@@ -34,16 +40,19 @@ import 'package:health_tracker_app/domain/usecases/log_health_data_usecase.dart'
 import 'package:health_tracker_app/domain/usecases/log_workout_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/login_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/logout_usecase.dart';
+import 'package:health_tracker_app/domain/usecases/mark_notification_read_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/save_fcm_token_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/signup_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/toggle_workout_like_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_notification_settings_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_goals_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/update_user_profile_usecase.dart';
+import 'package:health_tracker_app/presentation/bloc/achievement/achievement_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/feed/feed_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/login/login_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/notification/notification_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/signup/signup_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/social/social_bloc.dart';
@@ -94,12 +103,12 @@ Future<void> init() async {
   sl.registerLazySingleton<WorkoutRemoteDataSource>(
     () => WorkoutRemoteDataSourceImpl(sl()),
   );
-
-  // --- THÊM MỚI (Nutrition) ---
   sl.registerLazySingleton<NutritionRemoteDataSource>(
     () => NutritionRemoteDataSourceImpl(sl()),
   );
-  // --- KẾT THÚC THÊM MỚI ---
+  sl.registerLazySingleton<AchievementRemoteDataSource>(
+    () => AchievementRemoteDataSourceImpl(sl()),
+  );
 
   // ### Repositories ###
   sl.registerLazySingleton<AuthRepository>(
@@ -117,12 +126,12 @@ Future<void> init() async {
   sl.registerLazySingleton<WorkoutRepository>(
     () => WorkoutRepositoryImpl(remoteDataSource: sl()),
   );
-
-  // --- THÊM MỚI (Nutrition) ---
   sl.registerLazySingleton<NutritionRepository>(
     () => NutritionRepositoryImpl(remoteDataSource: sl()),
   );
-  // --- KẾT THÚC THÊM MỚI ---
+  sl.registerLazySingleton<AchievementRepository>(
+    () => AchievementRepositoryImpl(remoteDataSource: sl()),
+  );
 
   // ### UseCases ###
   sl.registerLazySingleton(() => LoginUseCase(sl()));
@@ -156,6 +165,12 @@ Future<void> init() async {
 
   sl.registerLazySingleton(() => GetNutritionSummaryUseCase(sl()));
   sl.registerLazySingleton(() => GetWorkoutSummaryUseCase(sl()));
+
+  sl.registerLazySingleton(() => GetMyAchievementsUseCase(sl()));
+
+  sl.registerLazySingleton(() => GetNotificationsUseCase(sl()));
+  sl.registerLazySingleton(() => MarkNotificationReadUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnreadNotificationCountUseCase(sl()));
 
   // ### BLoCs ###
   sl.registerSingleton<AuthBloc>(
@@ -210,6 +225,16 @@ Future<void> init() async {
   );
 
   sl.registerFactory<SocialBloc>(() => SocialBloc(userRepository: sl()));
+
+  sl.registerFactory(() => AchievementBloc(getMyAchievementsUseCase: sl()));
+
+  sl.registerFactory<NotificationBloc>(
+    () => NotificationBloc(
+      getNotificationsUseCase: sl(),
+      markReadUseCase: sl(),
+      getUnreadCountUseCase: sl(),
+    ),
+  );
 
   // ### Services ###
   sl.registerLazySingleton(() => NotificationService(sl(), sl()));

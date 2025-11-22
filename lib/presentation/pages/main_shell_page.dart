@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_tracker_app/presentation/bloc/notification/notification_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/notification/notification_event.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/presentation/pages/home_page.dart';
 import 'package:health_tracker_app/presentation/pages/nutrition_page.dart';
@@ -51,6 +53,10 @@ class _MainShellPageState extends State<MainShellPage> {
         // Cung cấp WorkoutBloc
         BlocProvider(
           create: (context) => sl<WorkoutBloc>()..add(WorkoutsFetched()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              sl<NotificationBloc>()..add(NotificationCountChecked()),
         ),
       ],
       child: Scaffold(

@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/health_data/health_data_bloc.dart';
-import 'package:health_tracker_app/presentation/pages/profile_page.dart';
+import 'package:health_tracker_app/presentation/bloc/notification/notification_bloc.dart';
+import 'package:health_tracker_app/presentation/bloc/notification/notification_event.dart';
+import 'package:health_tracker_app/presentation/bloc/notification/notification_state.dart';
+import 'package:health_tracker_app/presentation/pages/achievement_page.dart';
+import 'package:health_tracker_app/presentation/pages/notification_page.dart';
 import 'package:health_tracker_app/domain/entities/health_data.dart';
 import 'package:intl/intl.dart';
 
-import 'package:health_tracker_app/presentation/pages/statistics_page.dart';
 import 'package:health_tracker_app/presentation/widgets/circular_health_tile.dart';
 import 'package:health_tracker_app/presentation/bloc/nutrition/nutrition_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/workout/workout_bloc.dart';
 
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:health_tracker_app/domain/entities/user_profile.dart';
-import 'package:health_tracker_app/core/di/service_locator.dart';
 
 // Hàm này sẽ trả về "Hôm nay", "Hôm qua", hoặc "dd/MM/yyyy"
 String _buildTitle(DateTime date) {
@@ -65,6 +67,62 @@ class HomePage extends StatelessWidget {
               ),
             ),
             actions: [
+              // NÚT THÔNG BÁO
+              BlocBuilder<NotificationBloc, NotificationState>(
+                builder: (context, state) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context)
+                              .push(
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider.value(
+                                    value: context.read<NotificationBloc>(),
+                                    child: const NotificationPage(),
+                                  ),
+                                ),
+                              )
+                              .then((_) {
+                                // Khi quay lại, cập nhật lại số lượng
+                                // ignore: use_build_context_synchronously
+                                context.read<NotificationBloc>().add(
+                                  NotificationCountChecked(),
+                                );
+                              });
+                        },
+                      ),
+                      if (state.unreadCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              state.unreadCount > 9
+                                  ? '9+'
+                                  : state.unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
               // --- NÚT CHỌN NGÀY ---
               IconButton(
                 icon: const Icon(
@@ -99,25 +157,15 @@ class HomePage extends StatelessWidget {
               ),
               // --- KẾT THÚC THÊM MỚI ---
               IconButton(
-                icon: const Icon(Icons.bar_chart, color: Colors.black),
+                tooltip: 'Thành tựu',
+                icon: const Icon(
+                  Icons.emoji_events,
+                  color: Colors.black,
+                ), // Icon Chiếc cúp
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const StatisticsPage(),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.person, color: Colors.black),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => BlocProvider<ProfileBloc>(
-                        create: (context) =>
-                            sl<ProfileBloc>()..add(ProfileFetched()),
-                        child: const ProfilePage(),
-                      ),
+                      builder: (context) => const AchievementPage(),
                     ),
                   );
                 },

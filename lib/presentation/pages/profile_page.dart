@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_tracker_app/presentation/bloc/profile/profile_bloc.dart';
+import 'package:health_tracker_app/presentation/pages/achievement_page.dart';
 import 'package:intl/intl.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -124,6 +125,9 @@ class ProfileForm extends StatelessWidget {
             ),
           ),
           const Divider(),
+
+          const SizedBox(height: 16),
+
           TextFormField(
             initialValue: profile.email,
             decoration: const InputDecoration(
@@ -167,6 +171,39 @@ class ProfileForm extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _DateOfBirthPicker(), // Widget chọn ngày
+          const SizedBox(height: 16),
+
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            child: ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.emoji_events, color: Colors.amber),
+              ),
+              title: const Text(
+                'Thành tựu & Huy hiệu',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text('Xem bộ sưu tập huy hiệu của bạn'),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AchievementPage(),
+                  ),
+                );
+              },
+            ),
+          ),
+
           const SizedBox(height: 16),
 
           // Thêm một đường kẻ
