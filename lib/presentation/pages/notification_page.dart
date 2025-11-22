@@ -19,6 +19,10 @@ class _NotificationPageState extends State<NotificationPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationBloc>().add(NotificationRefreshed());
+    });
   }
 
   void _onScroll() {

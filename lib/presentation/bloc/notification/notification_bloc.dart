@@ -26,6 +26,24 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<NotificationRead>(_onRead);
     on<NotificationAllRead>(_onAllRead);
     on<NotificationCountChecked>(_onCountChecked);
+    on<NotificationRefreshed>(_onRefreshed);
+  }
+
+  Future<void> _onRefreshed(
+    NotificationRefreshed event,
+    Emitter<NotificationState> emit,
+  ) async {
+    // Reset state về ban đầu để tải lại từ trang 0
+    emit(
+      state.copyWith(
+        status: NotificationStatus.initial,
+        notifications: [],
+        hasReachedMax: false,
+        page: 0,
+      ),
+    );
+    // Gọi sự kiện fetch ngay sau khi reset
+    add(NotificationFetched());
   }
 
   Future<void> _onFetched(

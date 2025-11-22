@@ -22,3 +22,5 @@ class NotificationAllRead extends NotificationEvent {}
 
 // Kiểm tra số lượng chưa đọc (để hiện chấm đỏ)
 class NotificationCountChecked extends NotificationEvent {}
+
+class NotificationRefreshed extends NotificationEvent {}
