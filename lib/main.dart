@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
       create: (context) => di.sl<AuthBloc>()..add(AuthCheckRequested()),
       child: MaterialApp(
         title: 'Health Tracker',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
         // Điều hướng dựa trên trạng thái AuthBloc
         home: BlocBuilder<AuthBloc, AuthState>(

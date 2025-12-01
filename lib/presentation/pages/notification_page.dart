@@ -83,6 +83,7 @@ class _NotificationPageState extends State<NotificationPage> {
               return Container(
                 color: notif.isRead
                     ? Colors.white
+                    // ignore: deprecated_member_use
                     : Colors.blue.withOpacity(0.05),
                 child: ListTile(
                   leading: CircleAvatar(
@@ -115,7 +116,6 @@ class _NotificationPageState extends State<NotificationPage> {
                         NotificationRead(notif.id),
                       );
                     }
-                    // TODO: Điều hướng tùy theo loại thông báo (ví dụ mở bài tập)
                   },
                 ),
               );
