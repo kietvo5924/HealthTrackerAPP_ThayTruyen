@@ -37,6 +37,7 @@ dependencies:
 
   # Networking
   dio: ^5.4.3+1         # Client HTTP mạnh mẽ để gọi API
+  stomp_dart_client: ^3.0.1 # WebSocket STOMP client cho realtime feed
   
   # Dependency Injection (Service Locator)
   get_it: ^7.7.0        # Để "tiêm" (inject) service, repository vào BLoC

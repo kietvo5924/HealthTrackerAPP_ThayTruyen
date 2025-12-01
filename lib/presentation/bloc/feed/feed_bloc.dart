@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
@@ -5,6 +7,8 @@ import 'package:stream_transform/stream_transform.dart';
 import 'package:health_tracker_app/domain/entities/workout.dart';
 import 'package:health_tracker_app/domain/usecases/get_community_feed_usecase.dart';
 import 'package:health_tracker_app/domain/usecases/toggle_workout_like_usecase.dart';
+import 'package:health_tracker_app/core/services/realtime_workout_service.dart';
+import 'package:health_tracker_app/domain/entities/workout_realtime_update.dart';
 
 part 'feed_event.dart';
 part 'feed_state.dart';
@@ -21,12 +25,16 @@ EventTransformer<E> _throttleDroppable<E>(Duration duration) {
 class FeedBloc extends Bloc<FeedEvent, FeedState> {
   final GetCommunityFeedUseCase _getCommunityFeedUseCase;
   final ToggleWorkoutLikeUseCase _toggleWorkoutLikeUseCase;
+  final RealtimeWorkoutService _realtimeWorkoutService;
+  StreamSubscription<WorkoutRealtimeUpdate>? _realtimeSubscription;
 
   FeedBloc({
     required GetCommunityFeedUseCase getCommunityFeedUseCase,
     required ToggleWorkoutLikeUseCase toggleWorkoutLikeUseCase,
+    required RealtimeWorkoutService realtimeWorkoutService,
   }) : _getCommunityFeedUseCase = getCommunityFeedUseCase,
        _toggleWorkoutLikeUseCase = toggleWorkoutLikeUseCase,
+       _realtimeWorkoutService = realtimeWorkoutService,
        super(const FeedState()) {
     // Xử lý tải lần đầu
     on<FeedFetched>(_onFeedFetched);
@@ -39,6 +47,12 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
 
     // Xử lý Like
     on<FeedWorkoutLiked>(_onWorkoutLiked);
+
+    // Lắng nghe realtime updates
+    _realtimeSubscription = _realtimeWorkoutService.updates.listen(
+      (update) => add(FeedRealtimeUpdateReceived(update)),
+    );
+    on<FeedRealtimeUpdateReceived>(_onRealtimeUpdate);
   }
 
   // 1. Logic tải trang đầu tiên
@@ -146,5 +160,33 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         emit(state.copyWith(workouts: confirmedList));
       },
     );
+  }
+
+  void _onRealtimeUpdate(
+    FeedRealtimeUpdateReceived event,
+    Emitter<FeedState> emit,
+  ) {
+    if (state.workouts.isEmpty) {
+      return;
+    }
+
+    final updatedList = state.workouts.map((workout) {
+      if (workout.id == event.update.workoutId) {
+        return workout.copyWith(
+          likeCount: event.update.likeCount,
+          commentCount: event.update.commentCount,
+        );
+      }
+      return workout;
+    }).toList();
+
+    emit(state.copyWith(workouts: updatedList));
+  }
+
+  @override
+  Future<void> close() async {
+    await _realtimeSubscription?.cancel();
+    _realtimeWorkoutService.disconnect();
+    await super.close();
   }
 }

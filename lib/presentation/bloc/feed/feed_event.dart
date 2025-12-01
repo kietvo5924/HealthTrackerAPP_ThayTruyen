@@ -21,3 +21,13 @@ class FeedWorkoutLiked extends FeedEvent {
   @override
   List<Object> get props => [workoutId];
 }
+
+// Sự kiện 4: Nhận cập nhật realtime từ WebSocket
+class FeedRealtimeUpdateReceived extends FeedEvent {
+  final WorkoutRealtimeUpdate update;
+
+  const FeedRealtimeUpdateReceived(this.update);
+
+  @override
+  List<Object> get props => [update];
+}

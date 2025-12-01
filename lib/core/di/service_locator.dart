@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:health_tracker_app/core/network/dio_client.dart';
 import 'package:health_tracker_app/core/services/notification_service.dart';
+import 'package:health_tracker_app/core/services/realtime_workout_service.dart';
 import 'package:health_tracker_app/data/datasources/local/auth_local_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/achievement_remote_data_source.dart';
 import 'package:health_tracker_app/data/datasources/remote/auth_remote_data_source.dart';
@@ -210,8 +211,11 @@ Future<void> init() async {
     () => TrackingBloc(location: sl(), getHealthDataUseCase: sl()),
   );
   sl.registerFactory<FeedBloc>(
-    () =>
-        FeedBloc(getCommunityFeedUseCase: sl(), toggleWorkoutLikeUseCase: sl()),
+    () => FeedBloc(
+      getCommunityFeedUseCase: sl(),
+      toggleWorkoutLikeUseCase: sl(),
+      realtimeWorkoutService: sl(),
+    ),
   );
 
   sl.registerFactory<NutritionBloc>(
@@ -238,4 +242,5 @@ Future<void> init() async {
 
   // ### Services ###
   sl.registerLazySingleton(() => NotificationService(sl(), sl()));
+  sl.registerLazySingleton(() => RealtimeWorkoutService(sl(), sl()));
 }
